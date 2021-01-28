@@ -1,0 +1,28 @@
+#include "paths.h"
+#include "logger/logger.h"
+
+#include <Windows.h>
+#include <string>
+
+FilePath::FilePath(const char* path)
+{
+  strcpy(m_Path, path);
+}
+
+Paths::Paths()
+{
+  GetModuleFileName(nullptr, ms_ModulePath.m_Path, FilePath::MaxSize);
+  std::string binPath = ms_ModulePath.m_Path;
+  std::size_t lastIndex = binPath.find_last_of("\\");
+  binPath = binPath.substr(0, lastIndex);
+  std::string path = binPath + std::string("\\..\\content");
+  strcpy(ms_ContentPath.m_Path, path.c_str());
+  path = binPath + std::string("\\..\\intermediate\\shaders");
+  strcpy(ms_CompiledShaderPath.m_Path, path.c_str());
+}
+
+FilePath Paths::ms_ModulePath;
+FilePath Paths::ms_ContentPath;
+FilePath Paths::ms_CompiledShaderPath;
+
+Paths ms_Paths;
