@@ -1,7 +1,31 @@
 #include "inputstate.h"
 #include "GLFW/glfw3.h"
+#include "app/application.h"
+
+void InputState::Init(ApplicationInstance* instance)
+{
+  m_ApplicationInstance = instance;
+  AddSwitch("LMB", 0);
+  AddSwitch("RMB", 1);
+}
+
+void InputState::Update()
+{
+  double mouseX, mouseY;
+  glfwGetCursorPos(m_ApplicationInstance->GetWindow(), &mouseX, &mouseY);
+  m_MouseX = (float)mouseX;
+  m_MouseY = (float)mouseY;
+}
 
 void InputState::KeyCallback(int key, int scancode, int action, int mods)
+{
+  for (auto& sw : m_Switches)
+  {
+    sw.second.Update(key, action != GLFW_RELEASE);
+  }
+}
+
+void InputState::MouseKeyCallback(int key, int action, int mods)
 {
   for (auto& sw : m_Switches)
   {

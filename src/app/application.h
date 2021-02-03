@@ -19,6 +19,7 @@ public:
   void ScheduleStop() { m_Stop = true; }
   void Cleanup();
   void KeyCallback(int key, int scancode, int action, int mods);
+  void MouseKeyCallback(int key, int action, int mods);
 
   inline GameState& GetGameState() { return m_GameState; }
   inline const GameState& GetGameState() const { return m_GameState; }
@@ -27,6 +28,7 @@ public:
   inline AppTimer& GetTimer() { return m_AppTimer; }
   inline const AppTimer& GetTimer() const{ return m_AppTimer; }
 
+  GLFWwindow* GetWindow() const { return m_Window; }
 private:
   bool RegisterCreateAndShowWindow();
 };

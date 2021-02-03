@@ -20,6 +20,16 @@ void GlobalKeyCallback(GLFWwindow* window, int key, int scancode, int action, in
   gApplicationInstanceManager.GetSingletone().GetInstance(window).KeyCallback(key, scancode, action, mods);
 }
 
+void GlobalMouseKeyCallback(GLFWwindow* window, int key, int action, int mods)
+{
+  gApplicationInstanceManager.GetSingletone().GetInstance(window).MouseKeyCallback(key, action, mods);
+}
+
+void ApplicationInstance::MouseKeyCallback(int key, int action, int mods)
+{
+  m_InputState.MouseKeyCallback(key, action, mods);
+}
+
 void ApplicationInstance::KeyCallback(int key, int scancode, int action, int mods)
 {
   m_InputState.KeyCallback(key, scancode, action, mods);
@@ -45,7 +55,10 @@ void ApplicationInstance::Run()
       midiInStart(hMidiInput);
     }
     glfwSetKeyCallback(m_Window, GlobalKeyCallback);
+    glfwSetMouseButtonCallback(m_Window, GlobalMouseKeyCallback);
 
+    m_InputState.Init(this);
+    
     m_VulkanSubsystem.InitVulkan(m_Window);
     m_GameState.Init(&m_AppTimer, &m_InputState);
 
@@ -60,9 +73,18 @@ void ApplicationInstance::Run()
     while (!glfwWindowShouldClose(m_Window))
     {
       glfwPollEvents();
-      m_VulkanSubsystem.DrawFrame();
+      m_InputState.Update();
+      ImGui::NewFrame();
+
+      ImGuiIO& io = ImGui::GetIO();
+
+      io.MousePos = ImVec2(m_InputState.GetMouseX(), m_InputState.GetMouseY());
+      io.MouseDown[0] = m_InputState.IsSwitchOn("LMB");
+      io.MouseDown[1] = m_InputState.IsSwitchOn("RMB");
+
       m_AppTimer.Update();
       m_GameState.Update();
+      m_VulkanSubsystem.DrawFrame();
     }
     m_VulkanSubsystem.DeviceWaitIdle();
 

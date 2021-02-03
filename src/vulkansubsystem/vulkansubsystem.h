@@ -67,7 +67,7 @@ struct ImGuiVertexDescriptor
   {
     VkVertexInputBindingDescription bindingDescription = {};
     bindingDescription.binding = 0;
-    bindingDescription.stride = sizeof(Vertex);
+    bindingDescription.stride = sizeof(ImDrawVert);
     bindingDescription.inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
     return bindingDescription;
   }
@@ -263,8 +263,9 @@ public:
 private:
   enum
   {
-    MaxFramesInFlight = 2
+    MaxFramesInFlight = 1
   };
+  size_t m_TotalFrame = 0;
   size_t m_CurrentFrame = 0;
   std::vector<VkSemaphore> m_ImageAvailableSemaphores;
   std::vector<VkSemaphore> m_RenderFinishedSemaphores;

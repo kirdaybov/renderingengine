@@ -71,7 +71,7 @@ void VulkanSubsystem::InitVulkan(GLFWwindow* window)
   CreateUniformBuffers();
   CreateDescriptorPool();
   CreateDescriptorSets();
-  CreateCommandBuffers();
+  //CreateCommandBuffers();
   CreateSyncObjects();
 }
 
@@ -151,7 +151,7 @@ void VulkanSubsystem::RecreateSwapChain()
   CreateImGuiPipeline();
   CreateDepthResources();
   CreateFramebuffers();
-  CreateCommandBuffers();
+  //CreateCommandBuffers();
 }
 
 void VulkanSubsystem::CreateInstance()
@@ -1090,6 +1090,7 @@ void VulkanSubsystem::CreateImGuiBuffers()
   int texWidth, texHeight;
   io.Fonts->GetTexDataAsRGBA32(&fontData, &texWidth, &texHeight);
   VkDeviceSize uploadSize = texWidth * texHeight * 4 * sizeof(char);
+  
 
   // Create target image for copy
   //VkImageCreateInfo imageInfo = {};
@@ -1122,6 +1123,11 @@ void VulkanSubsystem::CreateImGuiBuffers()
   VkDeviceMemory stagingBufferMemory;
 
   CreateBuffer(uploadSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, stagingBuffer, stagingBufferMemory);
+
+  void* data;
+  vkMapMemory(m_Device, stagingBufferMemory, 0, uploadSize, 0, &data);
+  memcpy(data, fontData, uploadSize);
+  vkUnmapMemory(m_Device ,stagingBufferMemory);
 
   CreateImage(texWidth, texHeight, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, m_ImGuiFontImage, m_ImGuiFontMemory);
   TransitionImageLayout(m_ImGuiFontImage, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
@@ -1241,8 +1247,9 @@ void VulkanSubsystem::UpdateImGuiBuffers(bool unmap)
   //if ((m_ImGuiVertexBuffer.buffer == VK_NULL_HANDLE) || (vertexCount != imDrawData->TotalVtxCount))
   void* vertexData;
   void* indexData;
+  
   {
-    if (unmap && m_ImGuiVertexBufferMemory != VK_NULL_HANDLE)
+    if (m_ImGuiVertexBufferMemory)
     {
       vkUnmapMemory(m_Device, m_ImGuiVertexBufferMemory);
     }
@@ -1265,7 +1272,7 @@ void VulkanSubsystem::UpdateImGuiBuffers(bool unmap)
   //VkDeviceSize indexSize = imDrawData->TotalIdxCount * sizeof(ImDrawIdx);
   //if ((indexBuffer.buffer == VK_NULL_HANDLE) || (indexCount < imDrawData->TotalIdxCount))
   {
-    if (unmap && m_ImGuiIndexBufferMemory != VK_NULL_HANDLE)
+    if (m_ImGuiIndexBufferMemory)
     {
       vkUnmapMemory(m_Device, m_ImGuiIndexBufferMemory);
     }
@@ -1325,16 +1332,16 @@ void VulkanSubsystem::CreateCommandBuffers()
     throw std::runtime_error("failed to allocate command buffers!");
   }
 
-  UpdateImGuiBuffers();
+  UpdateImGuiBuffers(false);
 
-  for (size_t i = 0; i < m_CommandBuffers.size(); i++)
+  for (size_t b = 0; b < m_CommandBuffers.size(); b++)
   {
     VkCommandBufferBeginInfo beginInfo = {};
     beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
     beginInfo.flags = VK_COMMAND_BUFFER_USAGE_SIMULTANEOUS_USE_BIT;
     beginInfo.pInheritanceInfo = nullptr; // Optional
 
-    if (vkBeginCommandBuffer(m_CommandBuffers[i], &beginInfo) != VK_SUCCESS)
+    if (vkBeginCommandBuffer(m_CommandBuffers[b], &beginInfo) != VK_SUCCESS)
     {
       throw std::runtime_error("failed to begin recording command buffer!");
     }
@@ -1342,7 +1349,7 @@ void VulkanSubsystem::CreateCommandBuffers()
     VkRenderPassBeginInfo renderPassInfo = {};
     renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
     renderPassInfo.renderPass = m_RenderPass;
-    renderPassInfo.framebuffer = m_SwapChainFramebuffers[i];
+    renderPassInfo.framebuffer = m_SwapChainFramebuffers[b];
     renderPassInfo.renderArea.offset = { 0, 0 };
     renderPassInfo.renderArea.extent = m_SwapChainExtent;
 
@@ -1353,42 +1360,50 @@ void VulkanSubsystem::CreateCommandBuffers()
     renderPassInfo.clearValueCount = clearValues.size();
     renderPassInfo.pClearValues = clearValues.data();
 
-    vkCmdBeginRenderPass(m_CommandBuffers[i], &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
+    vkCmdBeginRenderPass(m_CommandBuffers[b], &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
 
-    vkCmdBindPipeline(m_CommandBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, m_GraphicsPipeline);
+    vkCmdBindPipeline(m_CommandBuffers[b], VK_PIPELINE_BIND_POINT_GRAPHICS, m_GraphicsPipeline);
 
     VkBuffer vertexBuffers[] = { m_VertexBuffer };
     VkDeviceSize offsets[] = { 0 };
-    vkCmdBindVertexBuffers(m_CommandBuffers[i], 0, 1, vertexBuffers, offsets);
+    vkCmdBindVertexBuffers(m_CommandBuffers[b], 0, 1, vertexBuffers, offsets);
 
-    vkCmdBindIndexBuffer(m_CommandBuffers[i], m_IndexBuffer, 0, VK_INDEX_TYPE_UINT32);
+    vkCmdBindIndexBuffer(m_CommandBuffers[b], m_IndexBuffer, 0, VK_INDEX_TYPE_UINT32);
 
-    vkCmdBindDescriptorSets(m_CommandBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, m_PipelineLayout, 0, 1, &m_DescriptorSets[i], 0, nullptr);
+    vkCmdBindDescriptorSets(m_CommandBuffers[b], VK_PIPELINE_BIND_POINT_GRAPHICS, m_PipelineLayout, 0, 1, &m_DescriptorSets[b], 0, nullptr);
 
-    vkCmdDrawIndexed(m_CommandBuffers[i], m_Indices.size(), 1, 0, 0, 0);
+    vkCmdDrawIndexed(m_CommandBuffers[b], m_Indices.size(), 1, 0, 0, 0);
 
     // ImGui start
-    vkCmdBindDescriptorSets(m_CommandBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, m_ImGuiPipelineLayout, 0, 1, &m_ImGuiDescriptorSet, 0, nullptr);
-
-    vkCmdBindPipeline(m_CommandBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, m_ImGuiPipeline);
-
+    vkCmdBindPipeline(m_CommandBuffers[b], VK_PIPELINE_BIND_POINT_GRAPHICS, m_ImGuiPipeline);
+    vkCmdBindDescriptorSets(m_CommandBuffers[b], VK_PIPELINE_BIND_POINT_GRAPHICS, m_ImGuiPipelineLayout, 0, 1, &m_ImGuiDescriptorSet, 0, nullptr);
+    
+    VkViewport viewport = {};
+    viewport.x = 0.0f;
+    viewport.y = 0.0f;
+    viewport.width = (float)m_SwapChainExtent.width;
+    viewport.height = (float)m_SwapChainExtent.height;
+    viewport.minDepth = 0.0f;
+    viewport.maxDepth = 1.0f;
+    vkCmdSetViewport(m_CommandBuffers[b], 0, 1, &viewport);
+    
     ImGuiIO& io = ImGui::GetIO();
-
+    
     m_ImGuiConst.scale = glm::vec2(2.0f / io.DisplaySize.x, 2.0f / io.DisplaySize.y);
     m_ImGuiConst.translate = glm::vec2(-1.0f);
-    vkCmdPushConstants(m_CommandBuffers[i], m_ImGuiPipelineLayout, VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(ImGuiConst), &m_ImGuiConst);
-
+    vkCmdPushConstants(m_CommandBuffers[b], m_ImGuiPipelineLayout, VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(ImGuiConst), &m_ImGuiConst);
+    
     // Render commands
     ImDrawData* imDrawData = ImGui::GetDrawData();
     int32_t vertexOffset = 0;
     int32_t indexOffset = 0;
-
+    
     if (imDrawData && imDrawData->CmdListsCount > 0) {
-
+    
       VkDeviceSize offsets[1] = { 0 };
-      vkCmdBindVertexBuffers(m_CommandBuffers[i], 0, 1, &m_ImGuiVertexBuffer, offsets);
-      vkCmdBindIndexBuffer(m_CommandBuffers[i], m_ImGuiIndexBuffer, 0, VK_INDEX_TYPE_UINT16);
-
+      vkCmdBindVertexBuffers(m_CommandBuffers[b], 0, 1, &m_ImGuiVertexBuffer, offsets);
+      vkCmdBindIndexBuffer(m_CommandBuffers[b], m_ImGuiIndexBuffer, 0, VK_INDEX_TYPE_UINT16);
+    
       for (int32_t i = 0; i < imDrawData->CmdListsCount; i++)
       {
         const ImDrawList* cmd_list = imDrawData->CmdLists[i];
@@ -1400,25 +1415,18 @@ void VulkanSubsystem::CreateCommandBuffers()
           scissorRect.offset.y = std::max((int32_t)(pcmd->ClipRect.y), 0);
           scissorRect.extent.width = (uint32_t)(pcmd->ClipRect.z - pcmd->ClipRect.x);
           scissorRect.extent.height = (uint32_t)(pcmd->ClipRect.w - pcmd->ClipRect.y);
-          VkViewport viewport = {};
-          viewport.x = 0.0f;
-          viewport.y = 0.0f;
-          viewport.width = (float)m_SwapChainExtent.width;
-          viewport.height = (float)m_SwapChainExtent.height;
-          viewport.minDepth = 0.0f;
-          viewport.maxDepth = 1.0f;
-          vkCmdSetViewport(m_CommandBuffers[i], 0, 1, &viewport);
-          vkCmdSetScissor(m_CommandBuffers[i], 0, 1, &scissorRect);
-          vkCmdDrawIndexed(m_CommandBuffers[i], pcmd->ElemCount, 1, indexOffset, vertexOffset, 0);
+    
+          vkCmdSetScissor(m_CommandBuffers[b], 0, 1, &scissorRect);
+          vkCmdDrawIndexed(m_CommandBuffers[b], pcmd->ElemCount, 1, indexOffset, vertexOffset, 0);
           indexOffset += pcmd->ElemCount;
         }
         vertexOffset += cmd_list->VtxBuffer.Size;
       }
     }
 
-    vkCmdEndRenderPass(m_CommandBuffers[i]);
+    vkCmdEndRenderPass(m_CommandBuffers[b]);
 
-    if (vkEndCommandBuffer(m_CommandBuffers[i]) != VK_SUCCESS)
+    if (vkEndCommandBuffer(m_CommandBuffers[b]) != VK_SUCCESS)
     {
       throw std::runtime_error("failed to record command buffer!");
     }
@@ -1426,15 +1434,14 @@ void VulkanSubsystem::CreateCommandBuffers()
 }
 
 void VulkanSubsystem::DrawFrame()
-{
-  ImGui::NewFrame();
-  
-  ImGui::ShowDemoWindow();
-  
+{ 
   ImGui::Render();
 
   vkWaitForFences(m_Device, 1, &m_InFlightFences[m_CurrentFrame], VK_TRUE, (std::numeric_limits<uint64_t>::max)());
   vkResetFences(m_Device, 1, &m_InFlightFences[m_CurrentFrame]);
+
+  CreateCommandBuffers();
+
   uint32_t imageIndex;
   vkAcquireNextImageKHR(m_Device, m_SwapChain, (std::numeric_limits<uint64_t>::max)(), m_ImageAvailableSemaphores[m_CurrentFrame], VK_NULL_HANDLE, &imageIndex);
 
@@ -1473,6 +1480,7 @@ void VulkanSubsystem::DrawFrame()
   vkQueuePresentKHR(m_PresentQueue, &presentInfo);
 
   m_CurrentFrame = (m_CurrentFrame + 1) % MaxFramesInFlight;
+  m_TotalFrame++;
 }
 
 void VulkanSubsystem::CreateSyncObjects()

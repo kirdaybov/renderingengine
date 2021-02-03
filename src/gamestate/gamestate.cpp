@@ -2,9 +2,15 @@
 #include "apptimer/apptimer.h"
 #include "input/inputstate.h"
 #include "GLFW/glfw3.h"
+#include "imgui.h"
 
 void GameState::Update()
 {
+  if (ImGui::Begin("Scene"))
+  {
+    ImGui::SliderFloat3("Rotation", m_Rotation, 0, 180);
+    ImGui::End();
+  }
   if (m_InputState->IsSwitchOn("-x"))
     AddRotation(0, -1.f);
   if (m_InputState->IsSwitchOn("+x"))
