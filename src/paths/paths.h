@@ -23,9 +23,11 @@ struct Paths
   static FilePath GetModulePath() { return ms_ModulePath; }
   static FilePath GetContentPath() { return ms_ContentPath; }
   static FilePath GetCompiledShaderPath() { return ms_CompiledShaderPath; }
+  static FilePath GetShaderCodePath() { return ms_ShaderCodePath; }
 private:
   static FilePath ms_ContentPath;
   static FilePath ms_ModulePath;
   static FilePath ms_CompiledShaderPath;
+  static FilePath ms_ShaderCodePath;
 };
 

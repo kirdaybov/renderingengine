@@ -19,10 +19,13 @@ Paths::Paths()
   strcpy(ms_ContentPath.m_Path, path.c_str());
   path = binPath + std::string("\\..\\intermediate\\shaders");
   strcpy(ms_CompiledShaderPath.m_Path, path.c_str());
+  path = binPath + std::string("\\..\\shaders");
+  strcpy(ms_ShaderCodePath.m_Path, path.c_str());
 }
 
 FilePath Paths::ms_ModulePath;
 FilePath Paths::ms_ContentPath;
 FilePath Paths::ms_CompiledShaderPath;
+FilePath Paths::ms_ShaderCodePath;
 
 Paths ms_Paths;

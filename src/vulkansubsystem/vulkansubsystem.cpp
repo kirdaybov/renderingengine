@@ -189,10 +189,7 @@ void VulkanSubsystem::CreateInstance()
     instanceCreateInfo.enabledLayerCount = 0;
   }
 
-  if (vkCreateInstance(&instanceCreateInfo, nullptr, &m_Instance) == VK_SUCCESS)
-    LOGF("Vulkan instance created successfully");
-  else
-    DEBUG_BREAK("VK error: couldn't create instance");
+  VK_CHECK(vkCreateInstance(&instanceCreateInfo, nullptr, &m_Instance));
 }
 
 void VulkanSubsystem::ListAvailableExtensions() const
@@ -616,11 +613,11 @@ std::vector<char> ReadFile(const std::string& filename)
 
 void VulkanSubsystem::CreateGraphicsPipeline()
 {
-  auto vertShaderCode = ReadFile(*gAssetManager.GetAsset("vert")->m_Path); //"C:/_work/tbs/intermediate/shaders/vert.spv");
-  auto fragShaderCode = ReadFile(*gAssetManager.GetAsset("frag")->m_Path); // "C:/_work/tbs/intermediate/shaders/frag.spv");
+  ShaderBinary* vsShader = gApplicationInstanceManager.GetInstance(m_Window).GetShaderCompiler().GetShader("meshvs");
+  ShaderBinary* psShader = gApplicationInstanceManager.GetInstance(m_Window).GetShaderCompiler().GetShader("meshps");
 
-  VkShaderModule vertShaderModule = CreateShaderModule(vertShaderCode);
-  VkShaderModule fragShaderModule = CreateShaderModule(fragShaderCode);
+  VkShaderModule vertShaderModule = CreateShaderModule(vsShader->GetData(), vsShader->GetSize());
+  VkShaderModule fragShaderModule = CreateShaderModule(psShader->GetData(), psShader->GetSize());
 
   VkPipelineShaderStageCreateInfo vertShaderStageInfo = {};
   vertShaderStageInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
@@ -768,11 +765,11 @@ void VulkanSubsystem::CreateGraphicsPipeline()
 
 void VulkanSubsystem::CreateImGuiPipeline()
 {
-  auto vertShaderCode = ReadFile(*gAssetManager.GetAsset("uivert")->m_Path);
-  auto fragShaderCode = ReadFile(*gAssetManager.GetAsset("uifrag")->m_Path);
+  ShaderBinary* vsShader = gApplicationInstanceManager.GetInstance(m_Window).GetShaderCompiler().GetShader("uivs");
+  ShaderBinary* psShader = gApplicationInstanceManager.GetInstance(m_Window).GetShaderCompiler().GetShader("uips");
 
-  VkShaderModule vertShaderModule = CreateShaderModule(vertShaderCode);
-  VkShaderModule fragShaderModule = CreateShaderModule(fragShaderCode);
+  VkShaderModule vertShaderModule = CreateShaderModule(vsShader->GetData(), vsShader->GetSize());
+  VkShaderModule fragShaderModule = CreateShaderModule(psShader->GetData(), psShader->GetSize());
 
   VkPipelineShaderStageCreateInfo vertShaderStageInfo = {};
   vertShaderStageInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
@@ -964,12 +961,12 @@ void VulkanSubsystem::CreateImGuiPipeline()
   vkDestroyShaderModule(m_Device, vertShaderModule, nullptr);
 }
 
-VkShaderModule VulkanSubsystem::CreateShaderModule(const std::vector<char>& code)
+VkShaderModule VulkanSubsystem::CreateShaderModule(char* code, int size)
 {
   VkShaderModuleCreateInfo createInfo = {};
   createInfo.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
-  createInfo.codeSize = code.size();
-  createInfo.pCode = reinterpret_cast<const uint32_t*>(code.data());
+  createInfo.codeSize = size;
+  createInfo.pCode = reinterpret_cast<const uint32_t*>(code);
 
   VkShaderModule shaderModule;
   if (vkCreateShaderModule(m_Device, &createInfo, nullptr, &shaderModule) != VK_SUCCESS) {
@@ -1317,6 +1314,14 @@ void VulkanSubsystem::UpdateImGuiBuffers(bool unmap)
   vkFlushMappedMemoryRanges(m_Device, 1, &mappedRange);
 }
 
+void VulkanSubsystem::FreeCommandBuffers()
+{
+  if (m_CommandBuffers.size() > 0)
+  {
+    vkFreeCommandBuffers(m_Device, m_CommandPool, m_CommandBuffers.size(), m_CommandBuffers.data());
+  }
+}
+
 void VulkanSubsystem::CreateCommandBuffers()
 {
   m_CommandBuffers.resize(m_SwapChainFramebuffers.size());
@@ -1440,6 +1445,7 @@ void VulkanSubsystem::DrawFrame()
   vkWaitForFences(m_Device, 1, &m_InFlightFences[m_CurrentFrame], VK_TRUE, (std::numeric_limits<uint64_t>::max)());
   vkResetFences(m_Device, 1, &m_InFlightFences[m_CurrentFrame]);
 
+  FreeCommandBuffers();
   CreateCommandBuffers();
 
   uint32_t imageIndex;
@@ -2111,7 +2117,7 @@ void VulkanSubsystem::LoadModelFBX()
             vertex.m_Color = { 1,1,1 };
             int lTextureUVIndex = mesh->GetTextureUVIndex(polyIdx, subIdx);
             FbxVector2 uv = leUV->GetDirectArray().GetAt(lTextureUVIndex);
-            vertex.m_TexCoord = { uv[0], uv[1] };
+            vertex.m_TexCoord = { uv[0], 1 - uv[1] };
             m_Vertices.push_back(vertex);
           }
         }

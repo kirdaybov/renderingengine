@@ -5,6 +5,7 @@
 #include "gamestate/gamestate.h"
 #include "input/inputstate.h"
 #include "apptimer/apptimer.h"
+#include "shadercompiler/shadercompiler.h"
 
 class ApplicationInstance
 {
@@ -14,6 +15,7 @@ class ApplicationInstance
   GameState m_GameState;
   InputState m_InputState;
   AppTimer m_AppTimer;
+  ShaderCompiler m_ShaderCompiler;
 public:
   void Run();
   void ScheduleStop() { m_Stop = true; }
@@ -27,6 +29,7 @@ public:
   inline const InputState& GetInputState() const { return m_InputState; }
   inline AppTimer& GetTimer() { return m_AppTimer; }
   inline const AppTimer& GetTimer() const{ return m_AppTimer; }
+  inline ShaderCompiler& GetShaderCompiler() { return m_ShaderCompiler; }
 
   GLFWwindow* GetWindow() const { return m_Window; }
 private:

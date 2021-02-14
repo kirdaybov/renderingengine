@@ -7,6 +7,7 @@
 #include <fstream>
 #include <Windows.h>
 #include <string>
+#include "utils/utils.h"
 
 AssetManager AssetManager::ms_AssetManager = AssetManager();
 
@@ -45,10 +46,9 @@ void AssetInitFolderCrawler::ProcessFile(std::string name, int level)
     memcpy(asset->m_Data, &buffer[0], size);
     
     int lastDot = name.find_last_of(".");
-    int lastSep = name.find_last_of("\\");
     strcpy(asset->m_Extension, name.substr(lastDot, name.length()).c_str());
 
-    std::string assetName = name.substr(lastSep + 1, lastDot - lastSep - 1);
+    std::string assetName = Utils::StripPathFromName(name);
     asset->m_Path = FilePath(name.c_str());
           
     m_AssetManager->m_Assets.insert(std::make_pair(assetName.c_str(), asset));

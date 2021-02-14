@@ -88,7 +88,7 @@ struct ImGuiVertexDescriptor
 
     attributeDescriptions[2].binding = 0;
     attributeDescriptions[2].location = 2;
-    attributeDescriptions[2].format = VK_FORMAT_R8G8B8A8_UNORM;
+    attributeDescriptions[2].format = VK_FORMAT_R8G8B8A8_UNORM; 
     attributeDescriptions[2].offset = offsetof(ImDrawVert, col);
 
     return attributeDescriptions;
@@ -212,7 +212,7 @@ private:
 
   //
   void CreateGraphicsPipeline();
-  VkShaderModule CreateShaderModule(const std::vector<char>& code);
+  VkShaderModule CreateShaderModule(char* code, int size);
   VkRenderPass m_RenderPass;
   VkDescriptorSetLayout m_DescriptorSetLayout;
   VkPipelineLayout m_PipelineLayout;
@@ -253,6 +253,7 @@ private:
   void CreateCommandPool();
   std::vector<VkCommandBuffer> m_CommandBuffers;
   void CreateCommandBuffers();
+  void FreeCommandBuffers();
   VkCommandBuffer BeginSingleTimeCommands();
   void EndSingleTimeCommands(VkCommandBuffer commandBuffer);
 

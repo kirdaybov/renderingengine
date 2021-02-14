@@ -58,7 +58,8 @@ void ApplicationInstance::Run()
     glfwSetMouseButtonCallback(m_Window, GlobalMouseKeyCallback);
 
     m_InputState.Init(this);
-    
+
+    m_ShaderCompiler.Init();
     m_VulkanSubsystem.InitVulkan(m_Window);
     m_GameState.Init(&m_AppTimer, &m_InputState);
 
