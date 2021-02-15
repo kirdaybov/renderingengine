@@ -26,7 +26,7 @@ void ShaderSourceFolderCrawler::ProcessFile(std::string name, int level)
   if (ShaderBinary* shader = m_ShaderCompiler->GetShader(uid))
   {
     auto lastWriteTime = std::filesystem::last_write_time(name);
-    int lastWriteTimeInt = std::chrono::duration_cast<std::chrono::seconds>(lastWriteTime.time_since_epoch()).count();
+    int lastWriteTimeInt = static_cast<int>(std::chrono::duration_cast<std::chrono::seconds>(lastWriteTime.time_since_epoch()).count());
     if (shader->IsOld(lastWriteTimeInt))
     {
       shader->Compile(name);

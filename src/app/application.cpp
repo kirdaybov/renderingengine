@@ -11,7 +11,8 @@ void CALLBACK MidiInProc(
 {
   switch (wMsg)
   {
-  case MIM_DATA: LOGF("wMsg=MIM_DATA, dwInstance=%08x, dwParam1=%08x, dwParam2=%08x\n", dwInstance, dwParam1, dwParam2); break;
+  case MIM_DATA: LOGF("wMsg=MIM_DATA, dwInstance=%08x, dwParam1=%08x, dwParam2=%08x\n", 
+    static_cast<unsigned int>(dwInstance), static_cast<unsigned int>(dwParam1), static_cast<unsigned int>(dwParam2)); break;
   };
 }
 
@@ -70,7 +71,6 @@ void ApplicationInstance::Run()
     m_InputState.AddSwitch("-z", GLFW_KEY_Q);
     m_InputState.AddSwitch("+z", GLFW_KEY_E);
 
-    MSG msg;
     while (!glfwWindowShouldClose(m_Window))
     {
       glfwPollEvents();

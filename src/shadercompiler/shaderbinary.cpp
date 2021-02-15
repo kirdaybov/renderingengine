@@ -20,7 +20,7 @@ enum class ShaderType
 // will parse myshaderXX.hlsl where XX is ps, vs, cs, example meshvs.hlsl
 ShaderType GetShaderType(const std::string& name)
 {
-  int lastDot = name.find_last_of(".");
+  std::size_t lastDot = name.find_last_of(".");
   const std::string shaderType = name.substr(lastDot - 2, 2);
   if (shaderType == "vs")
   {
@@ -82,7 +82,7 @@ void ShaderBinary::Compile(const std::string& name)
     sourceBuffer.Size = size;
     sourceBuffer.Encoding = 0;
     IDxcResult* result;
-    compiler->Compile(&sourceBuffer, args.data(), args.size(), nullptr, IID_PPV_ARGS(&result));
+    compiler->Compile(&sourceBuffer, args.data(), static_cast<UINT32>(args.size()), nullptr, IID_PPV_ARGS(&result));
 
     HRESULT hrCompilation;
     result->GetStatus(&hrCompilation);
@@ -91,16 +91,16 @@ void ShaderBinary::Compile(const std::string& name)
     {
       IDxcBlobEncoding* printBlob;
       result->GetErrorBuffer(&printBlob);
-      DEBUG_BREAK("%s: %s", name.data(), printBlob->GetBufferPointer());
+      DEBUG_BREAK("%s: %s", name.data(), static_cast<char*>(printBlob->GetBufferPointer()));
     }
     else
     {
       IDxcBlob* code;
       result->GetResult(&code);
-      m_BinarySize = code->GetBufferSize();
+      m_BinarySize = static_cast<int>(code->GetBufferSize());
       m_Binary = static_cast<char*>(code->GetBufferPointer());
       auto lastWriteTime = std::filesystem::last_write_time(name);
-      m_Date = std::chrono::duration_cast<std::chrono::seconds>(lastWriteTime.time_since_epoch()).count();
+      m_Date = static_cast<int>(std::chrono::duration_cast<std::chrono::seconds>(lastWriteTime.time_since_epoch()).count());
       auto fileName = std::string("\\") + Utils::StripPathFromName(name) + ".spirv";
       Serialization::Serialize(*Paths::GetCompiledShaderPath() + fileName, this, false);
       LOGF("%s: successfuly compiled", name.data());

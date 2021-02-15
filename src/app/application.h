@@ -1,5 +1,6 @@
 #pragma once
 
+#include <Windows.h>
 #include <GLFW/glfw3.h>
 #include "vulkansubsystem/vulkansubsystem.h"
 #include "gamestate/gamestate.h"

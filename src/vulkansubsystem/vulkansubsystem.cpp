@@ -176,12 +176,12 @@ void VulkanSubsystem::CreateInstance()
   instanceCreateInfo.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
   instanceCreateInfo.pApplicationInfo = &applicationInfo;
   auto extensions = GetRequiredExtensions();
-  instanceCreateInfo.enabledExtensionCount = extensions.size();
+  instanceCreateInfo.enabledExtensionCount = static_cast<uint32_t>(extensions.size());
   instanceCreateInfo.ppEnabledExtensionNames = extensions.data();
 
   if (m_EnableValidationLayers)
   {
-    instanceCreateInfo.enabledLayerCount = m_ValidationLayers.size();
+    instanceCreateInfo.enabledLayerCount = static_cast<uint32_t>(m_ValidationLayers.size());
     instanceCreateInfo.ppEnabledLayerNames = m_ValidationLayers.data();
   }
   else
@@ -418,14 +418,14 @@ void VulkanSubsystem::CreateLogicalDevice()
 
   VkDeviceCreateInfo createInfo = {};
   createInfo.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
-  createInfo.queueCreateInfoCount = queueCreateInfos.size();
+  createInfo.queueCreateInfoCount = static_cast<uint32_t>(queueCreateInfos.size());
   createInfo.pQueueCreateInfos = queueCreateInfos.data();
   createInfo.pEnabledFeatures = &deviceFeatures;
-  createInfo.enabledExtensionCount = m_DeviceExtensions.size();
+  createInfo.enabledExtensionCount = static_cast<uint32_t>(m_DeviceExtensions.size());
   createInfo.ppEnabledExtensionNames = m_DeviceExtensions.data();
   if (m_EnableValidationLayers)
   {
-    createInfo.enabledLayerCount = m_ValidationLayers.size();
+    createInfo.enabledLayerCount = static_cast<uint32_t>(m_ValidationLayers.size());
     createInfo.ppEnabledLayerNames = m_ValidationLayers.data();
   }
   else
@@ -530,7 +530,7 @@ void VulkanSubsystem::CreateSwapChain()
   ImGui::CreateContext();
 
   ImGuiIO& io = ImGui::GetIO();
-  io.DisplaySize = ImVec2(extent.width, extent.height);
+  io.DisplaySize = ImVec2(static_cast<float>(extent.width), static_cast<float>(extent.height));
   io.DisplayFramebufferScale = ImVec2(1.0f, 1.0f);
 
   uint32_t imageCount = swapChainSupport.capabilities.minImageCount + 1;
@@ -551,7 +551,7 @@ void VulkanSubsystem::CreateSwapChain()
   createInfo.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
 
   QueueFamilyIndices indices = FindQueueFamilies(m_PhysicalDevice);
-  uint32_t queueFamilyIndices[] = { indices.graphicsFamily, indices.presentFamily };
+  uint32_t queueFamilyIndices[] = { static_cast<uint32_t>(indices.graphicsFamily), static_cast<uint32_t>(indices.presentFamily) };
 
   if (indices.graphicsFamily != indices.presentFamily)
   {
@@ -640,7 +640,7 @@ void VulkanSubsystem::CreateGraphicsPipeline()
   vertexInputInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
   vertexInputInfo.vertexBindingDescriptionCount = 1;
   vertexInputInfo.pVertexBindingDescriptions = &bindingDescription;
-  vertexInputInfo.vertexAttributeDescriptionCount = attributeDescription.size();
+  vertexInputInfo.vertexAttributeDescriptionCount = static_cast<uint32_t>(attributeDescription.size());
   vertexInputInfo.pVertexAttributeDescriptions = attributeDescription.data();
 
   VkPipelineInputAssemblyStateCreateInfo inputAssembly = {};
@@ -792,7 +792,7 @@ void VulkanSubsystem::CreateImGuiPipeline()
   vertexInputInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
   vertexInputInfo.vertexBindingDescriptionCount = 1;
   vertexInputInfo.pVertexBindingDescriptions = &bindingDescription;
-  vertexInputInfo.vertexAttributeDescriptionCount = attributeDescription.size();
+  vertexInputInfo.vertexAttributeDescriptionCount = static_cast<uint32_t>(attributeDescription.size());
   vertexInputInfo.pVertexAttributeDescriptions = attributeDescription.data();
 
   VkPipelineInputAssemblyStateCreateInfo inputAssembly = {};
@@ -1024,7 +1024,7 @@ void VulkanSubsystem::CreateRenderPass()
 
   VkRenderPassCreateInfo renderPassInfo = {};
   renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
-  renderPassInfo.attachmentCount = attachments.size();
+  renderPassInfo.attachmentCount = static_cast<uint32_t>(attachments.size());
   renderPassInfo.pAttachments = attachments.data();
   renderPassInfo.subpassCount = 1;
   renderPassInfo.pSubpasses = &subpass;
@@ -1051,7 +1051,7 @@ void VulkanSubsystem::CreateFramebuffers()
     VkFramebufferCreateInfo framebufferInfo = {};
     framebufferInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
     framebufferInfo.renderPass = m_RenderPass;
-    framebufferInfo.attachmentCount = attachments.size();
+    framebufferInfo.attachmentCount = static_cast<uint32_t>(attachments.size());
     framebufferInfo.pAttachments = attachments.data();
     framebufferInfo.width = m_SwapChainExtent.width;
     framebufferInfo.height = m_SwapChainExtent.height;
@@ -1318,7 +1318,7 @@ void VulkanSubsystem::FreeCommandBuffers()
 {
   if (m_CommandBuffers.size() > 0)
   {
-    vkFreeCommandBuffers(m_Device, m_CommandPool, m_CommandBuffers.size(), m_CommandBuffers.data());
+    vkFreeCommandBuffers(m_Device, m_CommandPool, static_cast<uint32_t>(m_CommandBuffers.size()), m_CommandBuffers.data());
   }
 }
 
@@ -1362,7 +1362,7 @@ void VulkanSubsystem::CreateCommandBuffers()
     std::array<VkClearValue, 2> clearValues = {};
     clearValues[0].color = { 0.0f, 0.0f, 0.0f, 1.0f };
     clearValues[1].depthStencil = { 1.0f, 0 };
-    renderPassInfo.clearValueCount = clearValues.size();
+    renderPassInfo.clearValueCount = static_cast<uint32_t>(clearValues.size());
     renderPassInfo.pClearValues = clearValues.data();
 
     vkCmdBeginRenderPass(m_CommandBuffers[b], &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
@@ -1377,7 +1377,7 @@ void VulkanSubsystem::CreateCommandBuffers()
 
     vkCmdBindDescriptorSets(m_CommandBuffers[b], VK_PIPELINE_BIND_POINT_GRAPHICS, m_PipelineLayout, 0, 1, &m_DescriptorSets[b], 0, nullptr);
 
-    vkCmdDrawIndexed(m_CommandBuffers[b], m_Indices.size(), 1, 0, 0, 0);
+    vkCmdDrawIndexed(m_CommandBuffers[b], static_cast<uint32_t>(m_Indices.size()), 1, 0, 0, 0);
 
     // ImGui start
     vkCmdBindPipeline(m_CommandBuffers[b], VK_PIPELINE_BIND_POINT_GRAPHICS, m_ImGuiPipeline);
@@ -1632,7 +1632,7 @@ void VulkanSubsystem::CreateDescriptorSetLayout()
 
   VkDescriptorSetLayoutCreateInfo layoutInfo = {};
   layoutInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
-  layoutInfo.bindingCount = bindings.size();
+  layoutInfo.bindingCount = static_cast<uint32_t>(bindings.size());
   layoutInfo.pBindings = bindings.data();
 
   if (vkCreateDescriptorSetLayout(m_Device, &layoutInfo, nullptr, &m_DescriptorSetLayout) != VK_SUCCESS)
@@ -1689,7 +1689,7 @@ void VulkanSubsystem::CreateDescriptorPool()
 
   VkDescriptorPoolCreateInfo poolInfo = {};
   poolInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
-  poolInfo.poolSizeCount = poolSizes.size();
+  poolInfo.poolSizeCount = static_cast<uint32_t>(poolSizes.size());
   poolInfo.pPoolSizes = poolSizes.data();
   poolInfo.maxSets = static_cast<uint32_t>(m_SwapChainImages.size()) + 1;
 
@@ -1706,7 +1706,7 @@ void VulkanSubsystem::CreateDescriptorSets()
   VkDescriptorSetAllocateInfo allocInfo = {};
   allocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
   allocInfo.descriptorPool = m_DescriptorPool;
-  allocInfo.descriptorSetCount = layouts.size();
+  allocInfo.descriptorSetCount = static_cast<uint32_t>(layouts.size());
   allocInfo.pSetLayouts = layouts.data();
 
   m_DescriptorSets.resize(m_SwapChainImages.size() + 1);
@@ -1744,7 +1744,7 @@ void VulkanSubsystem::CreateDescriptorSets()
     descriptorWrites[1].descriptorCount = 1;
     descriptorWrites[1].pImageInfo = &imageInfo;
 
-    vkUpdateDescriptorSets(m_Device, descriptorWrites.size(), descriptorWrites.data(), 0, nullptr);
+    vkUpdateDescriptorSets(m_Device, static_cast<uint32_t>(descriptorWrites.size()), descriptorWrites.data(), 0, nullptr);
   }
 
   // ImGui
@@ -2170,7 +2170,7 @@ void VulkanSubsystem::LoadModelTinyObj()
       vertex.m_Color = { 1.0f, 1.0f, 1.0f };
 
       m_Vertices.push_back(vertex);
-      m_Indices.push_back(m_Indices.size());
+      m_Indices.push_back(static_cast<uint32_t>(m_Indices.size()));
     }
   }
 }

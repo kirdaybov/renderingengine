@@ -14,7 +14,7 @@ struct FilePath
 
 private:
   char m_Path[MaxSize];
-  friend class Paths;
+  friend struct Paths;
 };
 
 struct Paths

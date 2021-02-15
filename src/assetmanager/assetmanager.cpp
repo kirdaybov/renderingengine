@@ -41,12 +41,12 @@ void AssetInitFolderCrawler::ProcessFile(std::string name, int level)
   if (file.read(buffer.data(), size))
   {
     Asset* asset = new Asset();
-    asset->m_Size = size;
+    asset->m_Size = static_cast<int>(size);
     asset->m_Data = (byte*)malloc(size);
     memcpy(asset->m_Data, &buffer[0], size);
     
-    int lastDot = name.find_last_of(".");
-    strcpy(asset->m_Extension, name.substr(lastDot, name.length()).c_str());
+    std::size_t lastDot = name.find_last_of(".");
+    strcpy_s(asset->m_Extension, name.substr(lastDot, name.length()).c_str());
 
     std::string assetName = Utils::StripPathFromName(name);
     asset->m_Path = FilePath(name.c_str());

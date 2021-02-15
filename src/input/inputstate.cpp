@@ -1,5 +1,4 @@
 #include "inputstate.h"
-#include "GLFW/glfw3.h"
 #include "app/application.h"
 
 void InputState::Init(ApplicationInstance* instance)

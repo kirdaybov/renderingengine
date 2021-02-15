@@ -6,7 +6,7 @@
 
 FilePath::FilePath(const char* path)
 {
-  strcpy(m_Path, path);
+  strcpy_s(m_Path, path);
 }
 
 Paths::Paths()
@@ -16,11 +16,11 @@ Paths::Paths()
   std::size_t lastIndex = binPath.find_last_of("\\");
   binPath = binPath.substr(0, lastIndex);
   std::string path = binPath + std::string("\\..\\content");
-  strcpy(ms_ContentPath.m_Path, path.c_str());
+  strcpy_s(ms_ContentPath.m_Path, path.c_str());
   path = binPath + std::string("\\..\\intermediate\\shaders");
-  strcpy(ms_CompiledShaderPath.m_Path, path.c_str());
+  strcpy_s(ms_CompiledShaderPath.m_Path, path.c_str());
   path = binPath + std::string("\\..\\shaders");
-  strcpy(ms_ShaderCodePath.m_Path, path.c_str());
+  strcpy_s(ms_ShaderCodePath.m_Path, path.c_str());
 }
 
 FilePath Paths::ms_ModulePath;
