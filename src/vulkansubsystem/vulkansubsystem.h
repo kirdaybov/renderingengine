@@ -1,6 +1,6 @@
 #pragma once
 #define VK_USE_PLATFORM_WIN32_KHR
-#include <vulkan/vulkan.h>
+#include "vulkancommon.h"
 #include <vector>
 #include <array>
 #include <Windows.h>
@@ -9,19 +9,9 @@
 #define GLM_FORCE_DEPTH_ZERO_TO_ONE
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
-
-#include <imgui.h>
+#include "renderable.h"
 
 struct GLFWwindow;
-
-#define VK_CHECK(code)                             \
-{                                                  \
-  VkResult result = code;                          \
-  if (result != VK_SUCCESS)                        \
-  {                                                \
-    DEBUG_BREAK("Vulkan error: %d", result);       \
-  }                                                \
-}
 
 struct Vertex
 {
@@ -61,40 +51,6 @@ struct Vertex
   }
 };
 
-struct ImGuiVertexDescriptor
-{
-  static VkVertexInputBindingDescription GetBindingDescription()
-  {
-    VkVertexInputBindingDescription bindingDescription = {};
-    bindingDescription.binding = 0;
-    bindingDescription.stride = sizeof(ImDrawVert);
-    bindingDescription.inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
-    return bindingDescription;
-  }
-
-  static std::array<VkVertexInputAttributeDescription, 3> GetAttributeDescriptions()
-  {
-    std::array<VkVertexInputAttributeDescription, 3> attributeDescriptions = {};
-
-    attributeDescriptions[0].binding = 0;
-    attributeDescriptions[0].location = 0;
-    attributeDescriptions[0].format = VK_FORMAT_R32G32_SFLOAT;
-    attributeDescriptions[0].offset = offsetof(ImDrawVert, pos);
-
-    attributeDescriptions[1].binding = 0;
-    attributeDescriptions[1].location = 1;
-    attributeDescriptions[1].format = VK_FORMAT_R32G32_SFLOAT;
-    attributeDescriptions[1].offset = offsetof(ImDrawVert, uv);
-
-    attributeDescriptions[2].binding = 0;
-    attributeDescriptions[2].location = 2;
-    attributeDescriptions[2].format = VK_FORMAT_R8G8B8A8_UNORM; 
-    attributeDescriptions[2].offset = offsetof(ImDrawVert, col);
-
-    return attributeDescriptions;
-  }
-};
-
 struct QueueFamilyIndices
 {
   int graphicsFamily = -1;
@@ -116,10 +72,10 @@ struct SwapChainSupportDetails {
   std::vector<VkPresentModeKHR> presentModes;
 };
 
-class VulkanSubsystem
+class Renderer
 {
 public:
-  void InitVulkan(GLFWwindow* window);
+  void Init(GLFWwindow* window);
   void Cleanup();
 private:
 
@@ -193,6 +149,8 @@ private:
   //
   VkQueue m_PresentQueue;
 
+  std::vector<IRenderable*> m_Renderables;
+
   //
   SwapChainSupportDetails QuerySwapChainSupport(VkPhysicalDevice device) const;
   VkSurfaceFormatKHR ChooseSwapSurfaceFormat(const std::vector<VkSurfaceFormatKHR>& availableFormats);
@@ -212,37 +170,11 @@ private:
 
   //
   void CreateGraphicsPipeline();
-  VkShaderModule CreateShaderModule(char* code, int size);
   VkRenderPass m_RenderPass;
   VkDescriptorSetLayout m_DescriptorSetLayout;
   VkPipelineLayout m_PipelineLayout;
   void CreateRenderPass();
   VkPipeline m_GraphicsPipeline;
-
-  // ImGui
-  void CreateImGuiPipeline();
-  VkPipeline m_ImGuiPipeline;
-  VkPipelineLayout m_ImGuiPipelineLayout;
-  VkDescriptorSetLayout m_ImGuiDescriptorSetLayout;
-  VkDescriptorSet m_ImGuiDescriptorSet;
-  void CreateImGuiBuffers();
-  void UpdateImGuiBuffers(bool unmap = true);
-  VkBuffer m_ImGuiVertexBuffer;
-  VkBuffer m_ImGuiIndexBuffer;
-  VkDeviceMemory m_ImGuiVertexBufferMemory;
-  VkDeviceMemory m_ImGuiIndexBufferMemory;
-
-  VkDeviceMemory m_ImGuiFontMemory;
-  VkImage m_ImGuiFontImage;
-  VkImageView m_ImGuiFontView;
-  VkSampler m_ImGuiFontSampler;
-
-
-  struct ImGuiConst
-  {
-    glm::vec2 scale;
-    glm::vec2 translate;
-  } m_ImGuiConst;
 
   //
   std::vector<VkFramebuffer> m_SwapChainFramebuffers;
@@ -274,7 +206,6 @@ private:
   void CreateSyncObjects();
 
   //
-  void CreateBuffer(VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties, VkBuffer& buffer, VkDeviceMemory& bufferMemory);
   void CreateVertexBuffer();
   void CreateIndexBuffer();
   std::vector<Vertex> m_Vertices;
@@ -302,14 +233,10 @@ private:
   void CreateDescriptorSets();
 
   //
-  void CreateImage(uint32_t width, uint32_t height, VkFormat format, VkImageTiling tiling, VkImageUsageFlags usage, VkMemoryPropertyFlags properties, VkImage& image, VkDeviceMemory& imageMemory);
-  VkImageView CreateImageView(VkImage image, VkFormat format, VkImageAspectFlags aspectFlags);
   void CreateTextureImage();
   VkImage m_TextureImage;
   VkDeviceMemory m_TextureImageMemory;
   VkImageView m_TextureImageView;
-  void TransitionImageLayout(VkImage image, VkFormat format, VkImageLayout oldLayout, VkImageLayout newLayout);
-  void CopyBufferToImage(VkBuffer buffer, VkImage image, uint32_t width, uint32_t height);
   void CreateTextureImageView();
 
   //
@@ -324,4 +251,16 @@ private:
   VkFormat FindSupportedFormat(const std::vector<VkFormat>& candidates, VkImageTiling tiling, VkFormatFeatureFlags features);
   VkFormat FindDepthFormat();
   bool HasStencilComponent(VkFormat format);
+
+//TODO: maybe it shouldn't be public?
+public:
+  VkShaderModule CreateShaderModule(char* code, int size);
+  void CreateBuffer(VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties, VkBuffer& buffer, VkDeviceMemory& bufferMemory);
+  void CreateImage(uint32_t width, uint32_t height, VkFormat format, VkImageTiling tiling, VkImageUsageFlags usage, VkMemoryPropertyFlags properties, VkImage& image, VkDeviceMemory& imageMemory);
+  VkImageView CreateImageView(VkImage image, VkFormat format, VkImageAspectFlags aspectFlags);
+  void TransitionImageLayout(VkImage image, VkFormat format, VkImageLayout oldLayout, VkImageLayout newLayout);
+  void CopyBufferToImage(VkBuffer buffer, VkImage image, uint32_t width, uint32_t height);
+  VkExtent2D GetSwapChainExtent() { return m_SwapChainExtent; }
+  VkDevice GetDevice() { return m_Device; }
+  VkRenderPass GetRenderPass() { return m_RenderPass; }
 };

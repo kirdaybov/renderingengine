@@ -11,7 +11,7 @@
 class ApplicationInstance
 {
   bool m_Stop = false;
-  VulkanSubsystem m_VulkanSubsystem;
+  Renderer m_Renderer;
   GLFWwindow* m_Window;
   GameState m_GameState;
   InputState m_InputState;
@@ -24,13 +24,14 @@ public:
   void KeyCallback(int key, int scancode, int action, int mods);
   void MouseKeyCallback(int key, int action, int mods);
 
-  inline GameState& GetGameState() { return m_GameState; }
-  inline const GameState& GetGameState() const { return m_GameState; }
-  inline InputState& GetInputState() { return m_InputState; }
-  inline const InputState& GetInputState() const { return m_InputState; }
-  inline AppTimer& GetTimer() { return m_AppTimer; }
-  inline const AppTimer& GetTimer() const{ return m_AppTimer; }
-  inline ShaderCompiler& GetShaderCompiler() { return m_ShaderCompiler; }
+  GameState& GetGameState() { return m_GameState; }
+  const GameState& GetGameState() const { return m_GameState; }
+  InputState& GetInputState() { return m_InputState; }
+  const InputState& GetInputState() const { return m_InputState; }
+  AppTimer& GetTimer() { return m_AppTimer; }
+  const AppTimer& GetTimer() const{ return m_AppTimer; }
+  ShaderCompiler& GetShaderCompiler() { return m_ShaderCompiler; }
+  Renderer& GetRenderer() { return m_Renderer; }
 
   GLFWwindow* GetWindow() const { return m_Window; }
 private:
@@ -38,6 +39,7 @@ private:
 };
 
 #define gApplicationInstanceManager ApplicationInstanceManager::GetSingletone()
+#define gRenderer ApplicationInstanceManager::GetSingletone().GetInstance().GetRenderer()
 
 class ApplicationInstanceManager
 {
@@ -45,7 +47,8 @@ class ApplicationInstanceManager
   ApplicationInstance m_Instance;
 public:
   inline static ApplicationInstanceManager& GetSingletone() { return m_Singletone; }
-  ApplicationInstance& GetInstance(GLFWwindow* window) { return m_Instance; }
+  ApplicationInstance& GetInstance(GLFWwindow* window) { return m_Instance; } //TODO: remove
+  ApplicationInstance& GetInstance() { return m_Instance; }
   bool StartNewInstance()
   {
     m_Instance.Run();

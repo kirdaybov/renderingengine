@@ -1,5 +1,6 @@
 #include "application.h"
 #include "logger/logger.h"
+#include "imgui.h"
 
 void CALLBACK MidiInProc(
   HMIDIIN   hMidiIn,
@@ -61,7 +62,7 @@ void ApplicationInstance::Run()
     m_InputState.Init(this);
 
     m_ShaderCompiler.Init();
-    m_VulkanSubsystem.InitVulkan(m_Window);
+    m_Renderer.Init(m_Window);
     m_GameState.Init(&m_AppTimer, &m_InputState);
 
     m_InputState.AddSwitch("-x", GLFW_KEY_A);
@@ -85,9 +86,9 @@ void ApplicationInstance::Run()
 
       m_AppTimer.Update();
       m_GameState.Update();
-      m_VulkanSubsystem.DrawFrame();
+      m_Renderer.DrawFrame();
     }
-    m_VulkanSubsystem.DeviceWaitIdle();
+    m_Renderer.DeviceWaitIdle();
 
     Cleanup();
   }
@@ -95,7 +96,7 @@ void ApplicationInstance::Run()
 
 void ApplicationInstance::Cleanup()
 {
-  m_VulkanSubsystem.Cleanup();
+  m_Renderer.Cleanup();
   glfwDestroyWindow(m_Window);
   glfwTerminate();
 }
