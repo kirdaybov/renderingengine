@@ -9,6 +9,7 @@ void GameState::Update()
   if (ImGui::Begin("Scene"))
   {
     ImGui::SliderFloat3("Rotation", m_Rotation, 0, 180);
+    ImGui::SliderFloat3("Sun Light", m_SunLightDirection, -1, 1);
     ImGui::End();
   }
   if (m_InputState->IsSwitchOn("-x"))

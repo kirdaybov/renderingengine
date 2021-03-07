@@ -13,44 +13,6 @@
 
 struct GLFWwindow;
 
-struct Vertex
-{
-  glm::vec3 m_Position;
-  glm::vec3 m_Color;
-  glm::vec2 m_TexCoord;
-
-  static VkVertexInputBindingDescription GetBindingDescription()
-  {
-    VkVertexInputBindingDescription bindingDescription = {};
-    bindingDescription.binding = 0;
-    bindingDescription.stride = sizeof(Vertex);
-    bindingDescription.inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
-    return bindingDescription;
-  }
-
-  static std::array<VkVertexInputAttributeDescription, 3> GetAttributeDescriptions()
-  {
-    std::array<VkVertexInputAttributeDescription, 3> attributeDescriptions = {};
-
-    attributeDescriptions[0].binding = 0;
-    attributeDescriptions[0].location = 0;
-    attributeDescriptions[0].format = VK_FORMAT_R32G32B32_SFLOAT;
-    attributeDescriptions[0].offset = offsetof(Vertex, m_Position);
-
-    attributeDescriptions[1].binding = 0;
-    attributeDescriptions[1].location = 1;
-    attributeDescriptions[1].format = VK_FORMAT_R32G32B32_SFLOAT;
-    attributeDescriptions[1].offset = offsetof(Vertex, m_Color);
-
-    attributeDescriptions[2].binding = 0;
-    attributeDescriptions[2].location = 2;
-    attributeDescriptions[2].format = VK_FORMAT_R32G32_SFLOAT;
-    attributeDescriptions[2].offset = offsetof(Vertex, m_TexCoord);
-
-    return attributeDescriptions;
-  }
-};
-
 struct QueueFamilyIndices
 {
   int graphicsFamily = -1;
@@ -169,12 +131,8 @@ private:
   std::vector<VkImageView> m_SwapChainImageViews;
 
   //
-  void CreateGraphicsPipeline();
-  VkRenderPass m_RenderPass;
-  VkDescriptorSetLayout m_DescriptorSetLayout;
-  VkPipelineLayout m_PipelineLayout;
   void CreateRenderPass();
-  VkPipeline m_GraphicsPipeline;
+  VkRenderPass m_RenderPass;
 
   //
   std::vector<VkFramebuffer> m_SwapChainFramebuffers;
@@ -184,7 +142,7 @@ private:
   VkCommandPool m_CommandPool;
   void CreateCommandPool();
   std::vector<VkCommandBuffer> m_CommandBuffers;
-  void CreateCommandBuffers();
+  void CreateCommandBuffers(uint32_t imageIdx);
   void FreeCommandBuffers();
   VkCommandBuffer BeginSingleTimeCommands();
   void EndSingleTimeCommands(VkCommandBuffer commandBuffer);
@@ -206,43 +164,8 @@ private:
   void CreateSyncObjects();
 
   //
-  void CreateVertexBuffer();
-  void CreateIndexBuffer();
-  std::vector<Vertex> m_Vertices;
-  std::vector<uint32_t> m_Indices;
-  VkBuffer m_VertexBuffer;
-  VkDeviceMemory m_VertexBufferMemory;
-  VkBuffer m_IndexBuffer;
-  VkDeviceMemory m_IndexBufferMemory;
   uint32_t FindMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties);
-  void CopyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size);
-  void LoadModelTinyObj();
-  void LoadModelFBX();
-
-  //
-  void CreateDescriptorSetLayout();
-  std::vector<VkBuffer> m_UniformBuffers;
-  std::vector<VkDeviceMemory> m_UniformBuffersMemory;
-  void CreateUniformBuffers();
-  void UpdateUniformBuffer(uint32_t currentImage);
-
-  //
-  VkDescriptorPool m_DescriptorPool;
-  std::vector<VkDescriptorSet> m_DescriptorSets;
-  void CreateDescriptorPool();
-  void CreateDescriptorSets();
-
-  //
-  void CreateTextureImage();
-  VkImage m_TextureImage;
-  VkDeviceMemory m_TextureImageMemory;
-  VkImageView m_TextureImageView;
-  void CreateTextureImageView();
-
-  //
-  VkSampler m_TextureSampler;
-  void CreateTextureSampler();
-
+  
   //
   VkImage m_DepthImage;
   VkDeviceMemory m_DepthImageMemory;
@@ -260,7 +183,10 @@ public:
   VkImageView CreateImageView(VkImage image, VkFormat format, VkImageAspectFlags aspectFlags);
   void TransitionImageLayout(VkImage image, VkFormat format, VkImageLayout oldLayout, VkImageLayout newLayout);
   void CopyBufferToImage(VkBuffer buffer, VkImage image, uint32_t width, uint32_t height);
+  void CopyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size);
+
   VkExtent2D GetSwapChainExtent() { return m_SwapChainExtent; }
+  size_t GetSwapChainImagesCount() { return m_SwapChainImages.size(); }
   VkDevice GetDevice() { return m_Device; }
   VkRenderPass GetRenderPass() { return m_RenderPass; }
 };

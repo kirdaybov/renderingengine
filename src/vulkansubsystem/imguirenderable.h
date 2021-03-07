@@ -70,7 +70,7 @@ class ImGuiRenderable : public IRenderable
   } m_ImGuiConst;
 
   void Init() override;
-  void Update() override;
-  void Render(VkCommandBuffer) override;
+  void Update(RenderContext& ctx) override;
+  void Render(RenderContext& ctx) override;
   void Cleanup() override;
 };

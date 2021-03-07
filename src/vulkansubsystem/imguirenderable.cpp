@@ -404,15 +404,16 @@ void ImGuiRenderable::Init()
   UpdateImGuiBuffers(false);
 }
 
-void ImGuiRenderable::Update()
+void ImGuiRenderable::Update(RenderContext& ctx)
 {
   ImGui::Render();
 
   UpdateImGuiBuffers(false);
 }
 
-void ImGuiRenderable::Render(VkCommandBuffer commandBuffer)
+void ImGuiRenderable::Render(RenderContext& ctx)
 {
+  VkCommandBuffer commandBuffer = ctx.m_CommandBuffer;
   // ImGui start
   vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, m_ImGuiPipeline);
   vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, m_ImGuiPipelineLayout, 0, 1, &m_ImGuiDescriptorSet, 0, nullptr);

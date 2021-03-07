@@ -106,7 +106,7 @@ bool ApplicationInstance::RegisterCreateAndShowWindow()
   glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
   glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
 
-  m_Window = glfwCreateWindow(1024, 768, "kirdaybov", nullptr, nullptr);
+  m_Window = glfwCreateWindow(1920, 1080, "kirdaybov", nullptr, nullptr);
   if (!m_Window)
   {
     LOGF("Couldn't create window");
