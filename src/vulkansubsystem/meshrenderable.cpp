@@ -212,7 +212,7 @@ void MeshRenderable::CreateIndexBuffer()
 
 void MeshRenderable::CreateDescriptorSetLayout()
 {
-  std::array<VkDescriptorSetLayoutBinding, 3> bindings;
+  std::array<VkDescriptorSetLayoutBinding, 2> bindings;
 
   // ubo layout binding
   bindings[0].binding = 0;
@@ -227,13 +227,6 @@ void MeshRenderable::CreateDescriptorSetLayout()
   bindings[1].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
   bindings[1].pImmutableSamplers = nullptr;
   bindings[1].stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
-
-  // normal binding
-  bindings[2].binding = 2;
-  bindings[2].descriptorCount = 1;
-  bindings[2].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-  bindings[2].pImmutableSamplers = nullptr;
-  bindings[2].stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
 
   VkDescriptorSetLayoutCreateInfo layoutInfo = {};
   layoutInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
@@ -330,11 +323,7 @@ void MeshRenderable::CreateDescriptorSets()
     imageInfos[0].imageView = m_TextureImageView;
     imageInfos[0].sampler = m_TextureSampler;
 
-    imageInfos[1].imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-    imageInfos[1].imageView = m_NormalImageView;
-    imageInfos[1].sampler = m_NormalSampler;
-
-    std::array<VkWriteDescriptorSet, 3> descriptorWrites = {};
+    std::array<VkWriteDescriptorSet, 2> descriptorWrites = {};
     descriptorWrites[0].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
     descriptorWrites[0].dstSet = m_DescriptorSets[i];
     descriptorWrites[0].dstBinding = 0;
@@ -352,14 +341,6 @@ void MeshRenderable::CreateDescriptorSets()
     descriptorWrites[1].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
     descriptorWrites[1].descriptorCount = 1;
     descriptorWrites[1].pImageInfo = &imageInfos[0];
-
-    descriptorWrites[2].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-    descriptorWrites[2].dstSet = m_DescriptorSets[i];
-    descriptorWrites[2].dstBinding = 2;
-    descriptorWrites[2].dstArrayElement = 0;
-    descriptorWrites[2].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-    descriptorWrites[2].descriptorCount = 1;
-    descriptorWrites[2].pImageInfo = &imageInfos[1];
 
     vkUpdateDescriptorSets(gRenderer.GetDevice(), static_cast<uint32_t>(descriptorWrites.size()), descriptorWrites.data(), 0, nullptr);
   }
@@ -400,13 +381,11 @@ void MeshRenderable::CreateImage(const char* name, VkImage& image, VkDeviceMemor
 void MeshRenderable::CreateTextureImage()
 {
   CreateImage("cube_DefaultMaterial_BaseColor", m_TextureImage, m_TextureImageMemory);
-  CreateImage("cube_DefaultMaterial_Normal", m_NormalImage, m_NormalImageMemory);
 }
 
 void MeshRenderable::CreateTextureImageView()
 {
   m_TextureImageView = gRenderer.CreateImageView(m_TextureImage, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_ASPECT_COLOR_BIT);
-  m_NormalImageView = gRenderer.CreateImageView(m_NormalImage, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_ASPECT_COLOR_BIT);
 }
 
 void MeshRenderable::CreateTextureSampler()
@@ -430,7 +409,6 @@ void MeshRenderable::CreateTextureSampler()
   samplerInfo.maxLod = 0.0f;
 
   VK_CHECK(vkCreateSampler(gRenderer.GetDevice(), &samplerInfo, nullptr, &m_TextureSampler));
-  VK_CHECK(vkCreateSampler(gRenderer.GetDevice(), &samplerInfo, nullptr, &m_NormalSampler));
 }
 
 void MeshRenderable::LoadModelFBX()
@@ -504,83 +482,12 @@ void MeshRenderable::LoadModelFBX()
           {
             m_Indices.push_back(indexIdx + 0);
             m_Indices.push_back(indexIdx + 1);
-            m_Indices.push_back(indexIdx + 2);
-            Vertex& v1 = m_Vertices[indexIdx + 0];
-            Vertex& v2 = m_Vertices[indexIdx + 1];
-            Vertex& v3 = m_Vertices[indexIdx + 2];
-            glm::vec3 edge1 = v2.m_Position - v1.m_Position;
-            glm::vec3 edge2 = v3.m_Position - v1.m_Position;
-            glm::vec2 deltaUV1 = v2.m_TexCoord - v1.m_TexCoord;
-            glm::vec2 deltaUV2 = v3.m_TexCoord - v1.m_TexCoord;
-
-            float f = 1.0f / (deltaUV1.x * deltaUV2.y - deltaUV2.x * deltaUV1.y);
-
-            glm::vec3 normal, tangent, bitangent;
-
-            normal = { 0, 0, 1 };
-
-            tangent.x = f * (deltaUV2.y * edge1.x - deltaUV1.y * edge2.x);
-            tangent.y = f * (deltaUV2.y * edge1.y - deltaUV1.y * edge2.y);
-            tangent.z = f * (deltaUV2.y * edge1.z - deltaUV1.y * edge2.z);
-
-            bitangent.x = f * (-deltaUV2.x * edge1.x + deltaUV1.x * edge2.x);
-            bitangent.y = f * (-deltaUV2.x * edge1.y + deltaUV1.x * edge2.y);
-            bitangent.z = f * (-deltaUV2.x * edge1.z + deltaUV1.x * edge2.z);
-
-            tangent = glm::normalize(tangent);
-            bitangent = glm::normalize(bitangent);
-            normal = glm::normalize(glm::cross(tangent, bitangent));
-
-            v1.m_Normal = normal;
-            v1.m_Tangent = tangent;
-            v1.m_Bitangent = bitangent;
-            v2.m_Normal = normal;
-            v2.m_Tangent = tangent;
-            v2.m_Bitangent = bitangent;
-            v3.m_Normal = normal;
-            v3.m_Tangent = tangent;
-            v3.m_Bitangent = bitangent;
+            m_Indices.push_back(indexIdx + 2);         
           }
           {
             m_Indices.push_back(indexIdx + 2);
             m_Indices.push_back(indexIdx + 3);
             m_Indices.push_back(indexIdx + 0);
-
-            Vertex& v1 = m_Vertices[indexIdx + 2];
-            Vertex& v2 = m_Vertices[indexIdx + 3];
-            Vertex& v3 = m_Vertices[indexIdx + 0];
-            glm::vec3 edge1 = v2.m_Position - v1.m_Position;
-            glm::vec3 edge2 = v3.m_Position - v1.m_Position;
-            glm::vec2 deltaUV1 = v2.m_TexCoord - v1.m_TexCoord;
-            glm::vec2 deltaUV2 = v3.m_TexCoord - v1.m_TexCoord;
-
-            float f = 1.0f / (deltaUV1.x * deltaUV2.y - deltaUV2.x * deltaUV1.y);
-
-            glm::vec3 normal, tangent, bitangent;
-
-            normal = { 0, 0, 1 };
-
-            tangent.x = f * (deltaUV2.y * edge1.x - deltaUV1.y * edge2.x);
-            tangent.y = f * (deltaUV2.y * edge1.y - deltaUV1.y * edge2.y);
-            tangent.z = f * (deltaUV2.y * edge1.z - deltaUV1.y * edge2.z);
-
-            bitangent.x = f * (-deltaUV2.x * edge1.x + deltaUV1.x * edge2.x);
-            bitangent.y = f * (-deltaUV2.x * edge1.y + deltaUV1.x * edge2.y);
-            bitangent.z = f * (-deltaUV2.x * edge1.z + deltaUV1.x * edge2.z);
-
-            tangent = glm::normalize(tangent);
-            bitangent = glm::normalize(bitangent);
-            normal = glm::normalize(glm::cross(tangent, bitangent));
-
-            v1.m_Normal = normal;
-            v1.m_Tangent = tangent;
-            v1.m_Bitangent = bitangent;
-            v2.m_Normal = normal;
-            v2.m_Tangent = tangent;
-            v2.m_Bitangent = bitangent;
-            v3.m_Normal = normal;
-            v3.m_Tangent = tangent;
-            v3.m_Bitangent = bitangent;
           }
           
         }
@@ -680,11 +587,6 @@ void MeshRenderable::Cleanup()
   vkDestroyImage(gRenderer.GetDevice(), m_TextureImage, nullptr);
   vkFreeMemory(gRenderer.GetDevice(), m_TextureImageMemory, nullptr);
 
-  vkDestroySampler(gRenderer.GetDevice(), m_NormalSampler, nullptr);
-  vkDestroyImageView(gRenderer.GetDevice(), m_NormalImageView, nullptr);
-  vkDestroyImage(gRenderer.GetDevice(), m_NormalImage, nullptr);
-  vkFreeMemory(gRenderer.GetDevice(), m_NormalImageMemory, nullptr);
-  
   vkDestroyDescriptorPool(gRenderer.GetDevice(), m_DescriptorPool, nullptr);
 
   vkDestroyDescriptorSetLayout(gRenderer.GetDevice(), m_DescriptorSetLayout, nullptr);

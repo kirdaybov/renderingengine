@@ -7,11 +7,8 @@
 struct Vertex
 {
   glm::vec3 m_Position;
-  glm::vec3 m_Normal;
   glm::vec2 m_TexCoord;
-  glm::vec3 m_Tangent;
-  glm::vec3 m_Bitangent;
-
+  
   static VkVertexInputBindingDescription GetBindingDescription()
   {
     VkVertexInputBindingDescription bindingDescription = {};
@@ -21,9 +18,9 @@ struct Vertex
     return bindingDescription;
   }
 
-  static std::array<VkVertexInputAttributeDescription, 5> GetAttributeDescriptions()
+  static std::array<VkVertexInputAttributeDescription, 2> GetAttributeDescriptions()
   {
-    std::array<VkVertexInputAttributeDescription, 5> attributeDescriptions = {};
+    std::array<VkVertexInputAttributeDescription, 2> attributeDescriptions = {};
 
     attributeDescriptions[0].binding = 0;
     attributeDescriptions[0].location = 0;
@@ -32,23 +29,8 @@ struct Vertex
 
     attributeDescriptions[1].binding = 0;
     attributeDescriptions[1].location = 1;
-    attributeDescriptions[1].format = VK_FORMAT_R32G32B32_SFLOAT;
-    attributeDescriptions[1].offset = offsetof(Vertex, m_Normal);
-
-    attributeDescriptions[2].binding = 0;
-    attributeDescriptions[2].location = 2;
-    attributeDescriptions[2].format = VK_FORMAT_R32G32_SFLOAT;
-    attributeDescriptions[2].offset = offsetof(Vertex, m_TexCoord);
-
-    attributeDescriptions[3].binding = 0;
-    attributeDescriptions[3].location = 3;
-    attributeDescriptions[3].format = VK_FORMAT_R32G32B32_SFLOAT;
-    attributeDescriptions[3].offset = offsetof(Vertex, m_Tangent);
-
-    attributeDescriptions[4].binding = 0;
-    attributeDescriptions[4].location = 4;
-    attributeDescriptions[4].format = VK_FORMAT_R32G32B32_SFLOAT;
-    attributeDescriptions[4].offset = offsetof(Vertex, m_Bitangent);
+    attributeDescriptions[1].format = VK_FORMAT_R32G32_SFLOAT;
+    attributeDescriptions[1].offset = offsetof(Vertex, m_TexCoord);
 
     return attributeDescriptions;
   }
@@ -92,15 +74,10 @@ class MeshRenderable : public IRenderable
   VkDeviceMemory m_TextureImageMemory;
   VkImageView m_TextureImageView;
 
-  VkImage m_NormalImage;
-  VkDeviceMemory m_NormalImageMemory;
-  VkImageView m_NormalImageView;
-
   void CreateTextureImageView();
 
   //
   VkSampler m_TextureSampler;
-  VkSampler m_NormalSampler;
   void CreateTextureSampler();
 
 
