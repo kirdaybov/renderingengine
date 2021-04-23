@@ -5,6 +5,7 @@
 #include "vulkancommon.h"
 #include <glm/vec2.hpp>
 #include <array>
+#include "buffer.h"
 
 struct ImGuiVertexDescriptor
 {
@@ -52,11 +53,9 @@ class ImGuiRenderable : public IRenderable
   VkDescriptorPool m_ImGuiDescriptorPool;
   VkDescriptorSetLayout m_ImGuiDescriptorSetLayout;
   VkDescriptorSet m_ImGuiDescriptorSet;
-  VkBuffer m_ImGuiVertexBuffer;
-  VkBuffer m_ImGuiIndexBuffer;
-  VkDeviceMemory m_ImGuiVertexBufferMemory;
-  VkDeviceMemory m_ImGuiIndexBufferMemory;
-
+  Buffer m_ImGuiVertexBuffer;
+  Buffer m_ImGuiIndexBuffer;
+  
   VkDeviceMemory m_ImGuiFontMemory;
   VkImage m_ImGuiFontImage;
   VkImageView m_ImGuiFontView;

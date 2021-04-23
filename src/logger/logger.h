@@ -20,4 +20,5 @@
     LOGGER_UNIQUE_NAME = false;                  \
   }                                   \
 }
-#define ASSERT(expr, ...) { if(!(expr)) { DEBUG_BREAK("", __VA_ARGS__); } }
+#define ASSERT(expr) { if(!(expr)) { DEBUG_BREAK("assert"); } }
+#define ASSERT_MSG(expr, fmt, ...) { if(!(expr)) { DEBUG_BREAK(fmt, __VA_ARGS__); } }

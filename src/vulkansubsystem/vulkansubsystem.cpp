@@ -827,6 +827,29 @@ void Renderer::CreateSyncObjects()
   }
 }
 
+void Renderer::CreateBuffer(VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties, Buffer& buffer)
+{
+  VkBufferCreateInfo bufferInfo = {};
+  bufferInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
+  bufferInfo.size = size;
+  bufferInfo.usage = usage;
+  bufferInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
+
+  VK_CHECK(vkCreateBuffer(m_Device, &bufferInfo, nullptr, &buffer.m_Buffer));
+
+  VkMemoryRequirements memRequirements;
+  vkGetBufferMemoryRequirements(m_Device, buffer.m_Buffer, &memRequirements);
+
+  VkMemoryAllocateInfo allocInfo = {};
+  allocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
+  allocInfo.allocationSize = memRequirements.size;
+  allocInfo.memoryTypeIndex = FindMemoryType(memRequirements.memoryTypeBits, properties);
+
+  VK_CHECK(vkAllocateMemory(m_Device, &allocInfo, nullptr, &buffer.m_BufferMemory));
+
+  vkBindBufferMemory(m_Device, buffer.m_Buffer, buffer.m_BufferMemory, 0);
+}
+
 void Renderer::CreateBuffer(VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties, VkBuffer& buffer, VkDeviceMemory& bufferMemory)
 {
   VkBufferCreateInfo bufferInfo = {};
@@ -881,6 +904,19 @@ void Renderer::CopyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize s
   copyRegion.dstOffset = 0; // Optional
   copyRegion.size = size;
   vkCmdCopyBuffer(commandBuffer, srcBuffer, dstBuffer, 1, &copyRegion);
+
+  EndSingleTimeCommands(commandBuffer);
+}
+
+void Renderer::CopyBuffer(Buffer& srcBuffer, Buffer& dstBuffer, VkDeviceSize size)
+{
+  VkCommandBuffer commandBuffer = BeginSingleTimeCommands();
+
+  VkBufferCopy copyRegion = {};
+  copyRegion.srcOffset = 0; // Optional
+  copyRegion.dstOffset = 0; // Optional
+  copyRegion.size = size;
+  vkCmdCopyBuffer(commandBuffer, srcBuffer.m_Buffer, dstBuffer.m_Buffer, 1, &copyRegion);
 
   EndSingleTimeCommands(commandBuffer);
 }

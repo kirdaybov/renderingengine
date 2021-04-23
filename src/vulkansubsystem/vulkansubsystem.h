@@ -10,6 +10,7 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include "renderable.h"
+#include "buffer.h"
 
 struct GLFWwindow;
 
@@ -178,12 +179,14 @@ private:
 //TODO: maybe it shouldn't be public?
 public:
   VkShaderModule CreateShaderModule(char* code, int size);
+  void CreateBuffer(VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties, Buffer& buffer);
   void CreateBuffer(VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties, VkBuffer& buffer, VkDeviceMemory& bufferMemory);
   void CreateImage(uint32_t width, uint32_t height, VkFormat format, VkImageTiling tiling, VkImageUsageFlags usage, VkMemoryPropertyFlags properties, VkImage& image, VkDeviceMemory& imageMemory);
   VkImageView CreateImageView(VkImage image, VkFormat format, VkImageAspectFlags aspectFlags);
   void TransitionImageLayout(VkImage image, VkFormat format, VkImageLayout oldLayout, VkImageLayout newLayout);
   void CopyBufferToImage(VkBuffer buffer, VkImage image, uint32_t width, uint32_t height);
   void CopyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size);
+  void CopyBuffer(Buffer& srcBuffer, Buffer& dstBuffer, VkDeviceSize size);
 
   VkExtent2D GetSwapChainExtent() { return m_SwapChainExtent; }
   size_t GetSwapChainImagesCount() { return m_SwapChainImages.size(); }

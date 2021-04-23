@@ -3,6 +3,7 @@
 #include <glm/glm.hpp>
 #include <array>
 #include <vector>
+#include <vulkansubsystem/buffer.h>
 
 struct Vertex
 {
@@ -46,17 +47,14 @@ class MeshRenderable : public IRenderable
   void CreateIndexBuffer();
   std::vector<Vertex> m_Vertices;
   std::vector<uint32_t> m_Indices;
-  VkBuffer m_VertexBuffer;
-  VkDeviceMemory m_VertexBufferMemory;
-  VkBuffer m_IndexBuffer;
-  VkDeviceMemory m_IndexBufferMemory;
+  Buffer m_VertexBuffer;
+  Buffer m_IndexBuffer;
   void LoadModelTinyObj();
   void LoadModelFBX();
 
   //
   void CreateDescriptorSetLayout();
-  std::vector<VkBuffer> m_UniformBuffers;
-  std::vector<VkDeviceMemory> m_UniformBuffersMemory;
+  std::vector<Buffer> m_UniformBuffers;
   void CreateUniformBuffers();
   void UpdateUniformBuffer(uint32_t currentImage);
 
