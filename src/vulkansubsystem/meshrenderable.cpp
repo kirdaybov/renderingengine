@@ -335,16 +335,11 @@ void MeshRenderable::CreateImage(const char* name, VkImage& image, VkDeviceMemor
     throw std::runtime_error("failed to load texture image!");
   }
 
-  // TODO: buffer
-  VkBuffer stagingBuffer;
-  VkDeviceMemory stagingBufferMemory;
+  Buffer stagingBuffer;
 
-  gRenderer.CreateBuffer(imageSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, stagingBuffer, stagingBufferMemory);
+  gRenderer.CreateBuffer(imageSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, stagingBuffer);
 
-  void* data;
-  vkMapMemory(gRenderer.GetDevice(), stagingBufferMemory, 0, imageSize, 0, &data);
-  memcpy(data, pixels, static_cast<size_t>(imageSize));
-  vkUnmapMemory(gRenderer.GetDevice(), stagingBufferMemory);
+  stagingBuffer.CopyDataToBufferMemory(gRenderer.GetDevice(), imageSize, pixels);
 
   stbi_image_free(pixels);
 
@@ -353,8 +348,7 @@ void MeshRenderable::CreateImage(const char* name, VkImage& image, VkDeviceMemor
   gRenderer.CopyBufferToImage(stagingBuffer, image, static_cast<uint32_t>(texWidth), static_cast<uint32_t>(texHeight));
   gRenderer.TransitionImageLayout(image, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
 
-  vkDestroyBuffer(gRenderer.GetDevice(), stagingBuffer, nullptr);
-  vkFreeMemory(gRenderer.GetDevice(), stagingBufferMemory, nullptr);
+  stagingBuffer.Cleanup();
 }
 
 void MeshRenderable::CreateTextureImage()

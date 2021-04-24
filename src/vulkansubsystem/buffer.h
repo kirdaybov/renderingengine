@@ -5,7 +5,6 @@ class Buffer
 {
 public:
   Buffer();
-  void Init();
   void Cleanup();
   void CopyDataToBufferMemory(VkDevice device, VkDeviceSize size, void* data);
   void MapMemory(void*& mappedData);

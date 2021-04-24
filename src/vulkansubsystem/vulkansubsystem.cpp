@@ -895,19 +895,6 @@ uint32_t Renderer::FindMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags pro
   throw std::runtime_error("failed to find suitable memory type!");
 }
 
-void Renderer::CopyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size)
-{
-  VkCommandBuffer commandBuffer = BeginSingleTimeCommands();
-  
-  VkBufferCopy copyRegion = {};
-  copyRegion.srcOffset = 0; // Optional
-  copyRegion.dstOffset = 0; // Optional
-  copyRegion.size = size;
-  vkCmdCopyBuffer(commandBuffer, srcBuffer, dstBuffer, 1, &copyRegion);
-
-  EndSingleTimeCommands(commandBuffer);
-}
-
 void Renderer::CopyBuffer(Buffer& srcBuffer, Buffer& dstBuffer, VkDeviceSize size)
 {
   VkCommandBuffer commandBuffer = BeginSingleTimeCommands();
@@ -1065,7 +1052,7 @@ void Renderer::TransitionImageLayout(VkImage image, VkFormat format, VkImageLayo
   EndSingleTimeCommands(commandBuffer);
 }
 
-void Renderer::CopyBufferToImage(VkBuffer buffer, VkImage image, uint32_t width, uint32_t height)
+void Renderer::CopyBufferToImage(Buffer& buffer, VkImage image, uint32_t width, uint32_t height)
 {
   VkCommandBuffer commandBuffer = BeginSingleTimeCommands();
 
@@ -1088,7 +1075,7 @@ void Renderer::CopyBufferToImage(VkBuffer buffer, VkImage image, uint32_t width,
 
   vkCmdCopyBufferToImage(
     commandBuffer,
-    buffer,
+    buffer.GetBuffer(),
     image,
     VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
     1,

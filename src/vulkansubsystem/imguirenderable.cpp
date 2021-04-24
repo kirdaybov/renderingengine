@@ -255,15 +255,11 @@ void ImGuiRenderable::CreateImGuiBuffers()
   VkDeviceSize uploadSize = texWidth * texHeight * 4 * sizeof(char);
 
   // Staging buffers for font data upload
-  VkBuffer stagingBuffer;
-  VkDeviceMemory stagingBufferMemory;
+  Buffer stagingBuffer;
 
-  gRenderer.CreateBuffer(uploadSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, stagingBuffer, stagingBufferMemory);
+  gRenderer.CreateBuffer(uploadSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, stagingBuffer);
 
-  void* data;
-  vkMapMemory(gRenderer.GetDevice(), stagingBufferMemory, 0, uploadSize, 0, &data);
-  memcpy(data, fontData, uploadSize);
-  vkUnmapMemory(gRenderer.GetDevice(), stagingBufferMemory);
+  stagingBuffer.CopyDataToBufferMemory(gRenderer.GetDevice(), uploadSize, fontData);
 
   gRenderer.CreateImage(texWidth, texHeight, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, m_ImGuiFontImage, m_ImGuiFontMemory);
   gRenderer.TransitionImageLayout(m_ImGuiFontImage, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
@@ -281,9 +277,8 @@ void ImGuiRenderable::CreateImGuiBuffers()
   viewInfo.subresourceRange.layerCount = 1;
   VK_CHECK(vkCreateImageView(gRenderer.GetDevice(), &viewInfo, nullptr, &m_ImGuiFontView));
 
-  vkDestroyBuffer(gRenderer.GetDevice(), stagingBuffer, nullptr);
-  vkFreeMemory(gRenderer.GetDevice(), stagingBufferMemory, nullptr);
-
+  stagingBuffer.Cleanup();
+  
   // Font texture Sampler
   VkSamplerCreateInfo samplerInfo = {};
   samplerInfo.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
@@ -434,6 +429,10 @@ void ImGuiRenderable::Cleanup()
 {
   m_ImGuiIndexBuffer.Cleanup();
   m_ImGuiVertexBuffer.Cleanup();
+  vkDestroySampler(gRenderer.GetDevice(), m_ImGuiFontSampler, nullptr);
+  vkDestroyImageView(gRenderer.GetDevice(), m_ImGuiFontView, nullptr);
+  vkDestroyImage(gRenderer.GetDevice(), m_ImGuiFontImage, nullptr);
+  vkFreeMemory(gRenderer.GetDevice(), m_ImGuiFontMemory, nullptr);
   vkDestroyPipeline(gRenderer.GetDevice(), m_ImGuiPipeline, nullptr);
   vkDestroyPipelineLayout(gRenderer.GetDevice(), m_ImGuiPipelineLayout, nullptr);
   vkDestroyDescriptorPool(gRenderer.GetDevice(), m_ImGuiDescriptorPool, nullptr);
