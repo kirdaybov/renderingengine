@@ -43,7 +43,7 @@ struct ImGuiVertexDescriptor
 
 class ImGuiRenderable : public IRenderable
 {
-  void CreateImGuiPipeline();
+  void CreateDescriptorSetLayout();
   void CreateDescriptorSets();
   void CreateImGuiBuffers();
   void UpdateImGuiBuffers(bool unmap = true);
@@ -71,5 +71,7 @@ class ImGuiRenderable : public IRenderable
   void Init() override;
   void Update(RenderContext& ctx) override;
   void Render(RenderContext& ctx) override;
+  void OnCleanupSwapChain() override;
+  void CreateGraphicsPipeline() override;  
   void Cleanup() override;
 };

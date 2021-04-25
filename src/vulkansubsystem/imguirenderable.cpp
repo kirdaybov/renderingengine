@@ -3,7 +3,7 @@
 #include "app/application.h"
 #include "vulkansubsystem.h"
 
-void ImGuiRenderable::CreateImGuiPipeline()
+void ImGuiRenderable::CreateGraphicsPipeline()
 {
   ShaderBinary* vsShader = gApplicationInstanceManager.GetInstance().GetShaderCompiler().GetShader("uivs");
   ShaderBinary* psShader = gApplicationInstanceManager.GetInstance().GetShaderCompiler().GetShader("uips");
@@ -132,34 +132,6 @@ void ImGuiRenderable::CreateImGuiPipeline()
   pushConstantRange.offset = 0;
   pushConstantRange.size = sizeof(ImGuiConst);
 
-  VkDescriptorSetLayoutBinding setLayoutBinding;
-  setLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-  setLayoutBinding.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
-  setLayoutBinding.binding = 0;
-  setLayoutBinding.descriptorCount = 1;
-
-  VkDescriptorSetLayoutBinding samplerLayoutBinding = {};
-  samplerLayoutBinding.binding = 1;
-  samplerLayoutBinding.descriptorCount = 1;
-  samplerLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-  samplerLayoutBinding.pImmutableSamplers = nullptr;
-  samplerLayoutBinding.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
-
-  std::vector<VkDescriptorSetLayoutBinding> setLayoutBindings = {
-      setLayoutBinding,
-      samplerLayoutBinding
-  };
-
-  VkDescriptorSetLayoutCreateInfo descriptorSetLayoutCreateInfo{};
-  descriptorSetLayoutCreateInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
-  descriptorSetLayoutCreateInfo.pBindings = setLayoutBindings.data();
-  descriptorSetLayoutCreateInfo.bindingCount = static_cast<uint32_t>(setLayoutBindings.size());
-
-  if (vkCreateDescriptorSetLayout(gRenderer.GetDevice(), &descriptorSetLayoutCreateInfo, nullptr, &m_ImGuiDescriptorSetLayout) != VK_SUCCESS)
-  {
-    throw std::runtime_error("failed to create descriptor set layout!");
-  }
-
   VkPipelineLayoutCreateInfo pipelineLayoutCreateInfo;
   pipelineLayoutCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
   pipelineLayoutCreateInfo.setLayoutCount = 1;
@@ -199,6 +171,37 @@ void ImGuiRenderable::CreateImGuiPipeline()
 
   vkDestroyShaderModule(gRenderer.GetDevice(), fragShaderModule, nullptr);
   vkDestroyShaderModule(gRenderer.GetDevice(), vertShaderModule, nullptr);
+}
+
+void ImGuiRenderable::CreateDescriptorSetLayout()
+{
+  VkDescriptorSetLayoutBinding setLayoutBinding;
+  setLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+  setLayoutBinding.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
+  setLayoutBinding.binding = 0;
+  setLayoutBinding.descriptorCount = 1;
+
+  VkDescriptorSetLayoutBinding samplerLayoutBinding = {};
+  samplerLayoutBinding.binding = 1;
+  samplerLayoutBinding.descriptorCount = 1;
+  samplerLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+  samplerLayoutBinding.pImmutableSamplers = nullptr;
+  samplerLayoutBinding.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
+
+  std::vector<VkDescriptorSetLayoutBinding> setLayoutBindings = {
+      setLayoutBinding,
+      samplerLayoutBinding
+  };
+
+  VkDescriptorSetLayoutCreateInfo descriptorSetLayoutCreateInfo{};
+  descriptorSetLayoutCreateInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
+  descriptorSetLayoutCreateInfo.pBindings = setLayoutBindings.data();
+  descriptorSetLayoutCreateInfo.bindingCount = static_cast<uint32_t>(setLayoutBindings.size());
+
+  if (vkCreateDescriptorSetLayout(gRenderer.GetDevice(), &descriptorSetLayoutCreateInfo, nullptr, &m_ImGuiDescriptorSetLayout) != VK_SUCCESS)
+  {
+    throw std::runtime_error("failed to create descriptor set layout!");
+  }
 }
 
 void ImGuiRenderable::CreateDescriptorSets()
@@ -358,7 +361,8 @@ void ImGuiRenderable::Init()
   io.DisplaySize = ImVec2(static_cast<float>(gRenderer.GetSwapChainExtent().width), static_cast<float>(gRenderer.GetSwapChainExtent().height));
   io.DisplayFramebufferScale = ImVec2(1.0f, 1.0f);
 
-  CreateImGuiPipeline();
+  CreateDescriptorSetLayout();
+  CreateGraphicsPipeline();
   CreateImGuiBuffers();
   CreateDescriptorSets();
   UpdateImGuiBuffers(false);
@@ -366,8 +370,6 @@ void ImGuiRenderable::Init()
 
 void ImGuiRenderable::Update(RenderContext& ctx)
 {
-  ImGui::Render();
-
   UpdateImGuiBuffers(false);
 }
 
@@ -425,6 +427,12 @@ void ImGuiRenderable::Render(RenderContext& ctx)
   }
 }
 
+void ImGuiRenderable::OnCleanupSwapChain()
+{
+  vkDestroyPipeline(gRenderer.GetDevice(), m_ImGuiPipeline, nullptr);
+  vkDestroyPipelineLayout(gRenderer.GetDevice(), m_ImGuiPipelineLayout, nullptr);
+}
+
 void ImGuiRenderable::Cleanup()
 {
   m_ImGuiIndexBuffer.Cleanup();
@@ -433,6 +441,7 @@ void ImGuiRenderable::Cleanup()
   vkDestroyImageView(gRenderer.GetDevice(), m_ImGuiFontView, nullptr);
   vkDestroyImage(gRenderer.GetDevice(), m_ImGuiFontImage, nullptr);
   vkFreeMemory(gRenderer.GetDevice(), m_ImGuiFontMemory, nullptr);
+  // TODO: duplication OnCleanupSwapChain()
   vkDestroyPipeline(gRenderer.GetDevice(), m_ImGuiPipeline, nullptr);
   vkDestroyPipelineLayout(gRenderer.GetDevice(), m_ImGuiPipelineLayout, nullptr);
   vkDestroyDescriptorPool(gRenderer.GetDevice(), m_ImGuiDescriptorPool, nullptr);

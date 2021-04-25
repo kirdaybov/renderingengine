@@ -37,7 +37,7 @@ void Buffer::CopyDataToBufferMemory(VkDevice device, VkDeviceSize size, void* da
 void Buffer::MapMemory(void*& mappedData)
 {
   ASSERT(!m_Mapped);
-  vkMapMemory(gRenderer.GetDevice(), m_BufferMemory, 0, VK_WHOLE_SIZE, 0, &mappedData);
+  VK_CHECK(vkMapMemory(gRenderer.GetDevice(), m_BufferMemory, 0, VK_WHOLE_SIZE, 0, &mappedData));
   m_Mapped = true;
 }
 

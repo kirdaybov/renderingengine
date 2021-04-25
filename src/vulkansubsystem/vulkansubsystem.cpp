@@ -6,9 +6,6 @@
 #include <set>
 #include <algorithm>
 
-// TODO: remove
-#include <fstream>
-
 #include <chrono>
 #include <array>
 
@@ -101,13 +98,26 @@ void Renderer::RecreateSwapChain()
 
   CleanupSwapChain();
 
+  for (IRenderable* renderable : m_Renderables)
+  {
+    renderable->OnCleanupSwapChain();
+  }
+
   CreateSwapChain();
   CreateImageViews();
   CreateRenderPass();
-  //CreateGraphicsPipeline();
+
+  for (IRenderable* renderable : m_Renderables)
+  {
+    renderable->CreateGraphicsPipeline();
+  }
+
   CreateDepthResources();
   CreateFramebuffers();
-  //CreateCommandBuffers();
+  for (int i = 0; i < m_SwapChainImages.size(); i++)
+  {
+    CreateCommandBuffers(i);
+  }
 }
 
 void Renderer::CreateInstance()
@@ -489,7 +499,6 @@ void Renderer::CreateSwapChain()
   VkSurfaceFormatKHR surfaceFormat = ChooseSwapSurfaceFormat(swapChainSupport.formats);
   VkPresentModeKHR presentMode = ChooseSwapPresentMode(swapChainSupport.presentModes);
   VkExtent2D extent = ChooseSwapExtent(swapChainSupport.capabilities);
-
   uint32_t imageCount = swapChainSupport.capabilities.minImageCount + 1;
 
   if (swapChainSupport.capabilities.maxImageCount > 0 && imageCount > swapChainSupport.capabilities.maxImageCount)
@@ -548,24 +557,6 @@ void Renderer::CreateImageViews()
   {
     m_SwapChainImageViews[i] = CreateImageView(m_SwapChainImages[i], m_SwapChainImageFormat, VK_IMAGE_ASPECT_COLOR_BIT);
   }
-}
-
-std::vector<char> ReadFile(const std::string& filename)
-{
-  std::ifstream file(filename, std::ios::ate | std::ios::binary);
-
-  if (!file.is_open())
-  {
-    throw std::runtime_error("failed to open file!");
-  }
-
-  size_t fileSize = (size_t)file.tellg();
-  std::vector<char> buffer(fileSize);
-  file.seekg(0);
-  file.read(buffer.data(), fileSize);
-  file.close();
-
-  return buffer;
 }
 
 VkShaderModule Renderer::CreateShaderModule(char* code, int size)
@@ -759,11 +750,16 @@ void Renderer::CreateCommandBuffers(uint32_t imageIdx)
 
 void Renderer::DrawFrame()
 { 
-  vkWaitForFences(m_Device, 1, &m_InFlightFences[m_CurrentFrame], VK_TRUE, (std::numeric_limits<uint64_t>::max)());
+  vkWaitForFences(m_Device, 1, &m_InFlightFences[m_CurrentFrame], VK_TRUE, 1000/*(std::numeric_limits<uint64_t>::max)()*/);
   vkResetFences(m_Device, 1, &m_InFlightFences[m_CurrentFrame]);
 
   uint32_t imageIndex;
-  vkAcquireNextImageKHR(m_Device, m_SwapChain, (std::numeric_limits<uint64_t>::max)(), m_ImageAvailableSemaphores[m_CurrentFrame], VK_NULL_HANDLE, &imageIndex);
+  if (vkAcquireNextImageKHR(m_Device, m_SwapChain, (std::numeric_limits<uint64_t>::max)(), m_ImageAvailableSemaphores[m_CurrentFrame], VK_NULL_HANDLE, &imageIndex)
+    == VK_ERROR_OUT_OF_DATE_KHR)
+  {
+    RecreateSwapChain();
+    return;
+  };
 
   FreeCommandBuffers();
   CreateCommandBuffers(imageIndex);

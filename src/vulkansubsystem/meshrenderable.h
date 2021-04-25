@@ -39,7 +39,6 @@ struct Vertex
 
 class MeshRenderable : public IRenderable
 {
-  void CreateGraphicsPipeline();
   VkDescriptorSetLayout m_DescriptorSetLayout;
   VkPipelineLayout m_PipelineLayout;
   VkPipeline m_GraphicsPipeline;
@@ -54,9 +53,9 @@ class MeshRenderable : public IRenderable
 
   //
   void CreateDescriptorSetLayout();
-  std::vector<Buffer> m_UniformBuffers;
-  void CreateUniformBuffers();
-  void UpdateUniformBuffer(uint32_t currentImage);
+  Buffer m_UniformBuffer;
+  void CreateUniformBuffer();
+  void UpdateUniformBuffer();
 
   //
   VkDescriptorPool m_DescriptorPool;
@@ -82,5 +81,7 @@ class MeshRenderable : public IRenderable
   void Init() override;
   void Update(RenderContext& ctx) override;
   void Render(RenderContext& ctx) override;
+  void OnCleanupSwapChain() override;
+  void CreateGraphicsPipeline() override;
   void Cleanup() override;
 };

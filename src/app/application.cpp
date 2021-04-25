@@ -86,6 +86,7 @@ void ApplicationInstance::Run()
 
       m_AppTimer.Update();
       m_GameState.Update();
+      ImGui::Render();
       m_Renderer.DrawFrame();
     }
     m_Renderer.DeviceWaitIdle();
@@ -104,7 +105,7 @@ void ApplicationInstance::Cleanup()
 bool ApplicationInstance::RegisterCreateAndShowWindow()
 {
   glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
-  glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
+  glfwWindowHint(GLFW_RESIZABLE, GLFW_TRUE);
 
   m_Window = glfwCreateWindow(1920, 1080, "kirdaybov", nullptr, nullptr);
   if (!m_Window)

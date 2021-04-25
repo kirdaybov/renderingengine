@@ -124,10 +124,7 @@ void MeshRenderable::CreateGraphicsPipeline()
   pipelineLayoutInfo.pNext = nullptr;
   pipelineLayoutInfo.flags = 0;
 
-  if (vkCreatePipelineLayout(gRenderer.GetDevice(), &pipelineLayoutInfo, nullptr, &m_PipelineLayout) != VK_SUCCESS)
-  {
-    throw std::runtime_error("failed to create pipeline layout!");
-  }
+  VK_CHECK(vkCreatePipelineLayout(gRenderer.GetDevice(), &pipelineLayoutInfo, nullptr, &m_PipelineLayout));
 
   VkPipelineDepthStencilStateCreateInfo depthStencil = {};
   depthStencil.sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;
@@ -159,10 +156,7 @@ void MeshRenderable::CreateGraphicsPipeline()
   pipelineInfo.basePipelineHandle = VK_NULL_HANDLE; // Optional
   pipelineInfo.basePipelineIndex = -1; // Optional
 
-  if (vkCreateGraphicsPipelines(gRenderer.GetDevice(), VK_NULL_HANDLE, 1, &pipelineInfo, nullptr, &m_GraphicsPipeline) != VK_SUCCESS)
-  {
-    throw std::runtime_error("failed to create graphics pipeline!");
-  }
+  VK_CHECK(vkCreateGraphicsPipelines(gRenderer.GetDevice(), VK_NULL_HANDLE, 1, &pipelineInfo, nullptr, &m_GraphicsPipeline));
 
   vkDestroyShaderModule(gRenderer.GetDevice(), fragShaderModule, nullptr);
   vkDestroyShaderModule(gRenderer.GetDevice(), vertShaderModule, nullptr);
@@ -221,20 +215,13 @@ void MeshRenderable::CreateDescriptorSetLayout()
   }
 }
 
-void MeshRenderable::CreateUniformBuffers()
+void MeshRenderable::CreateUniformBuffer()
 {
   VkDeviceSize bufferSize = sizeof(UniformBufferObject);
-
-  int swapChainImageCount = gRenderer.GetSwapChainImagesCount();
-  m_UniformBuffers.resize(swapChainImageCount);
-
-  for (size_t i = 0; i < swapChainImageCount; i++)
-  {
-    gRenderer.CreateBuffer(bufferSize, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, m_UniformBuffers[i]);
-  }
+  gRenderer.CreateBuffer(bufferSize, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, m_UniformBuffer);
 }
 
-void MeshRenderable::UpdateUniformBuffer(uint32_t currentImage)
+void MeshRenderable::UpdateUniformBuffer()
 {
   static auto startTime = std::chrono::high_resolution_clock::now();
 
@@ -252,7 +239,7 @@ void MeshRenderable::UpdateUniformBuffer(uint32_t currentImage)
   ubo.proj[1][1] *= -1;
   ubo.sunDirection = glm::fvec3(gameState.GetSunLightDirection(0), gameState.GetSunLightDirection(1), gameState.GetSunLightDirection(2));
 
-  m_UniformBuffers[currentImage].CopyDataToBufferMemory(gRenderer.GetDevice(), sizeof(ubo), &ubo);
+  m_UniformBuffer.CopyDataToBufferMemory(gRenderer.GetDevice(), sizeof(ubo), &ubo);
 }
 
 void MeshRenderable::CreateDescriptorPool()
@@ -292,7 +279,7 @@ void MeshRenderable::CreateDescriptorSets()
   for (size_t i = 0; i < swapChainImageCount; i++)
   {
     VkDescriptorBufferInfo bufferInfo = {};
-    bufferInfo.buffer = m_UniformBuffers[i].GetBuffer();
+    bufferInfo.buffer = m_UniformBuffer.GetBuffer();
     bufferInfo.offset = 0;
     bufferInfo.range = sizeof(UniformBufferObject);
 
@@ -517,14 +504,14 @@ void MeshRenderable::Init()
   LoadModelFBX();
   CreateVertexBuffer();
   CreateIndexBuffer();
-  CreateUniformBuffers();
+  CreateUniformBuffer();
   CreateDescriptorPool();
   CreateDescriptorSets();
 }
 
 void MeshRenderable::Update(RenderContext& ctx)
 {
-  UpdateUniformBuffer(ctx.m_ImageIdx);
+  UpdateUniformBuffer();
 }
 
 void MeshRenderable::Render(RenderContext& ctx)
@@ -544,16 +531,20 @@ void MeshRenderable::Render(RenderContext& ctx)
 
 }
 
-void MeshRenderable::Cleanup()
+void MeshRenderable::OnCleanupSwapChain()
 {
-  for (size_t i = 0; i < gRenderer.GetSwapChainImagesCount(); i++)
-  {
-    m_UniformBuffers[i].Cleanup();
-  }
-
   vkDestroyPipeline(gRenderer.GetDevice(), m_GraphicsPipeline, nullptr);
   vkDestroyPipelineLayout(gRenderer.GetDevice(), m_PipelineLayout, nullptr);
+}
 
+void MeshRenderable::Cleanup()
+{
+  m_UniformBuffer.Cleanup();
+
+  // TODO: duplication OnCleanupSwapChain()
+  vkDestroyPipeline(gRenderer.GetDevice(), m_GraphicsPipeline, nullptr);
+  vkDestroyPipelineLayout(gRenderer.GetDevice(), m_PipelineLayout, nullptr);
+  
   vkDestroySampler(gRenderer.GetDevice(), m_TextureSampler, nullptr);
   vkDestroyImageView(gRenderer.GetDevice(), m_TextureImageView, nullptr);
   vkDestroyImage(gRenderer.GetDevice(), m_TextureImage, nullptr);
