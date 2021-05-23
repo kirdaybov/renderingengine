@@ -175,21 +175,14 @@ void ImGuiRenderable::CreateGraphicsPipeline()
 
 void ImGuiRenderable::CreateDescriptorSetLayout()
 {
-  VkDescriptorSetLayoutBinding setLayoutBinding;
-  setLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-  setLayoutBinding.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
-  setLayoutBinding.binding = 0;
-  setLayoutBinding.descriptorCount = 1;
-
-  VkDescriptorSetLayoutBinding samplerLayoutBinding = {};
-  samplerLayoutBinding.binding = 1;
+  VkDescriptorSetLayoutBinding samplerLayoutBinding;
+  samplerLayoutBinding.binding = 0;
   samplerLayoutBinding.descriptorCount = 1;
   samplerLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
   samplerLayoutBinding.pImmutableSamplers = nullptr;
   samplerLayoutBinding.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
 
   std::vector<VkDescriptorSetLayoutBinding> setLayoutBindings = {
-      setLayoutBinding,
       samplerLayoutBinding
   };
 
@@ -238,7 +231,7 @@ void ImGuiRenderable::CreateDescriptorSets()
   VkWriteDescriptorSet descriptorWrite = {};
   descriptorWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
   descriptorWrite.dstSet = m_ImGuiDescriptorSet;
-  descriptorWrite.dstBinding = 1;
+  descriptorWrite.dstBinding = 0;
   descriptorWrite.dstArrayElement = 0;
   descriptorWrite.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
   descriptorWrite.descriptorCount = 1;

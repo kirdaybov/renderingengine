@@ -56,7 +56,7 @@ private:
   bool CheckValidationLayerSupport() const;
   const std::vector<const char*> m_ValidationLayers =
   {
-    "VK_LAYER_LUNARG_standard_validation"
+    "VK_LAYER_KHRONOS_validation"
   };
 #ifdef NDEBUG
   const bool m_EnableValidationLayers = false;

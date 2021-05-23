@@ -244,7 +244,7 @@ void MeshRenderable::UpdateUniformBuffer()
 
 void MeshRenderable::CreateDescriptorPool()
 {
-  int swapChainImageCount = gRenderer.GetSwapChainImagesCount();
+  int swapChainImageCount = static_cast<int>(gRenderer.GetSwapChainImagesCount());
   std::array<VkDescriptorPoolSize, 2> poolSizes = {};
   poolSizes[0].type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
   poolSizes[0].descriptorCount = static_cast<uint32_t>(swapChainImageCount);
@@ -265,7 +265,7 @@ void MeshRenderable::CreateDescriptorPool()
 
 void MeshRenderable::CreateDescriptorSets()
 {
-  int swapChainImageCount = gRenderer.GetSwapChainImagesCount();
+  int swapChainImageCount = static_cast<int>(gRenderer.GetSwapChainImagesCount());
   std::vector<VkDescriptorSetLayout> layouts(swapChainImageCount, m_DescriptorSetLayout);
   VkDescriptorSetAllocateInfo allocInfo = {};
   allocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;

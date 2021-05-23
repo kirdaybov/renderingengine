@@ -750,7 +750,7 @@ void Renderer::CreateCommandBuffers(uint32_t imageIdx)
 
 void Renderer::DrawFrame()
 { 
-  vkWaitForFences(m_Device, 1, &m_InFlightFences[m_CurrentFrame], VK_TRUE, 1000/*(std::numeric_limits<uint64_t>::max)()*/);
+  vkWaitForFences(m_Device, 1, &m_InFlightFences[m_CurrentFrame], VK_TRUE, (std::numeric_limits<uint64_t>::max)());
   vkResetFences(m_Device, 1, &m_InFlightFences[m_CurrentFrame]);
 
   uint32_t imageIndex;

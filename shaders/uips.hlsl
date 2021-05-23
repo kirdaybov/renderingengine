@@ -1,5 +1,5 @@
-Texture2D fontTexture : register(t1);
-SamplerState fontSampler : register(s1);
+Texture2D fontTexture : register(t0);
+SamplerState fontSampler : register(s0);
 
 struct VertexOutput
 {
