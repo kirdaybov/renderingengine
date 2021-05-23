@@ -12,6 +12,11 @@ UID::UID(const char* id_string)
   m_Id = UIDManager::GetInstance().GetUIDByName(id_string);
 }
 
+std::string UID::ToString() const 
+{
+  return UIDManager::GetInstance().GetNameByUID(m_Id);
+}
+
 int UIDManager::GetUIDByName(const char* key)
 {
   auto it = m_UIDs.find(key);
@@ -19,6 +24,18 @@ int UIDManager::GetUIDByName(const char* key)
     return it->second;
   m_UIDs.insert(std::make_pair(std::string(key), UID(ms_LastId++)));
   return m_UIDs.find(key)->second;
+}
+
+std::string UIDManager::GetNameByUID(int id)
+{
+  for (auto& pair : m_UIDs)
+  {
+    if (pair.second == UID(id))
+    {
+      return pair.first;
+    }
+  }
+  return std::string();
 }
 
 struct _test_UID

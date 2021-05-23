@@ -761,6 +761,16 @@ void Renderer::DrawFrame()
     return;
   };
 
+  if (m_ShaderUpdateScheduled)
+  {
+    for (IRenderable* renderable : m_Renderables)
+    {
+      renderable->OnCleanupSwapChain();
+      renderable->CreateGraphicsPipeline();
+    }
+    m_ShaderUpdateScheduled = false;
+  }
+
   FreeCommandBuffers();
   CreateCommandBuffers(imageIndex);
 

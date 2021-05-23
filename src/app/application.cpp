@@ -86,6 +86,7 @@ void ApplicationInstance::Run()
 
       m_AppTimer.Update();
       m_GameState.Update();
+      m_ShaderCompiler.Update();
       ImGui::Render();
       m_Renderer.DrawFrame();
     }

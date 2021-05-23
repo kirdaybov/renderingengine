@@ -35,7 +35,6 @@ public:
 private:
   void CrawlFolder(std::string path, int level)
   {
-    LOGF("Crawling ");
     std::vector<FileNode> files;
     ListCurrentFolder(path + "\\*", files);
     for (unsigned int i = 0; i < files.size(); i++)

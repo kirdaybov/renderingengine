@@ -152,7 +152,10 @@ public:
   //
   void DrawFrame();
   void DeviceWaitIdle() { vkDeviceWaitIdle(m_Device); }
+
+  void ScheduleShaderUpdate() { m_ShaderUpdateScheduled = true; }
 private:
+  bool m_ShaderUpdateScheduled = false;
   enum
   {
     MaxFramesInFlight = 1

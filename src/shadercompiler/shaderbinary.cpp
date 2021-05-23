@@ -49,7 +49,7 @@ const wchar_t* GetShaderProfile(ShaderType type)
   return types[(int)type];
 }
 
-void ShaderBinary::Compile(const std::string& name)
+bool ShaderBinary::Compile(const std::string& name)
 {
   IDxcLibrary* library;
   if (FAILED(DxcCreateInstance(CLSID_DxcLibrary, IID_PPV_ARGS(&library))))
@@ -92,6 +92,7 @@ void ShaderBinary::Compile(const std::string& name)
       IDxcBlobEncoding* printBlob;
       result->GetErrorBuffer(&printBlob);
       DEBUG_BREAK("%s: %s", name.data(), static_cast<char*>(printBlob->GetBufferPointer()));
+      m_IsCompiled = false;
     }
     else
     {
@@ -104,6 +105,10 @@ void ShaderBinary::Compile(const std::string& name)
       auto fileName = std::string("\\") + Utils::StripPathFromName(name) + ".spirv";
       Serialization::Serialize(*Paths::GetCompiledShaderPath() + fileName, this, false);
       LOGF("%s: successfuly compiled", name.data());
+      m_IsCompiled = true;
+      return true;
     }
   }
+
+  return false;
 }

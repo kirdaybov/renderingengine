@@ -17,6 +17,7 @@ public:
   inline bool operator !=(const UID &other) const { return m_Id != other.m_Id; }
   inline bool operator <(const UID &other) const { return m_Id < other.m_Id; }
   inline operator int() const { return m_Id; }
+  std::string ToString() const;
 private:
   int m_Id = InvalidUID;
 };
@@ -36,6 +37,7 @@ class UIDManager
 { 
 public:    
   int GetUIDByName(const char* key);
+  std::string GetNameByUID(int id);
   static UIDManager& GetInstance() { return ms_UIDManager; }
 private:
   static UIDManager ms_UIDManager;

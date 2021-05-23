@@ -12,12 +12,10 @@ class ShaderCompiler
 public:
   ~ShaderCompiler()
   {
-    for (auto& pair : m_Shaders)
-    {
-      delete pair.second;
-    }
+    Cleanup();    
   }
   void Init();
+  void Update();
   void AddShader(UID uid, ShaderBinary* shaderBinary);
   ShaderBinary* GetShader(UID uid)
   {
@@ -29,6 +27,7 @@ public:
     return nullptr;
   }
 private:
+  void Cleanup();
   std::map<UID, ShaderBinary*> m_Shaders;
 };
 
@@ -45,7 +44,9 @@ class ShaderSourceFolderCrawler : public FolderCrawler
 {
 public:
   ShaderSourceFolderCrawler(ShaderCompiler* shaderCompiler) : m_ShaderCompiler(shaderCompiler) {}
+  bool IsShaderUpdateRequired() { return m_UpdateShaders; }
 private:
+  bool m_UpdateShaders = false;
   ShaderCompiler* m_ShaderCompiler;
   void ProcessFile(std::string name, int level);
 };
