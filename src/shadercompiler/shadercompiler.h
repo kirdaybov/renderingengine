@@ -27,6 +27,8 @@ public:
     return nullptr;
   }
 private:
+  const float TIMEOUT = 1.f;
+  float m_TimeBeforeNextCheck = TIMEOUT;
   void Cleanup();
   std::map<UID, ShaderBinary*> m_Shaders;
 };

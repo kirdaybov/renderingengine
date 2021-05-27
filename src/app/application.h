@@ -39,6 +39,7 @@ private:
 };
 
 #define gApplicationInstanceManager ApplicationInstanceManager::GetSingletone()
+#define gApp ApplicationInstanceManager::GetSingletone().GetInstance()
 #define gRenderer ApplicationInstanceManager::GetSingletone().GetInstance().GetRenderer()
 
 class ApplicationInstanceManager

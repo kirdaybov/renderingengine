@@ -75,10 +75,18 @@ void ShaderCompiler::Update()
     ImGui::End();
   }
 
-  ShaderSourceFolderCrawler shaderSourceCrawler(this);
-  shaderSourceCrawler.Crawl(*Paths::GetShaderCodePath());
-  if (shaderSourceCrawler.IsShaderUpdateRequired())
+  if (m_TimeBeforeNextCheck > 0.f)
   {
-    gRenderer.ScheduleShaderUpdate();
+    m_TimeBeforeNextCheck -= gApp.GetTimer().GetFrameSeconds();
+  }
+  else
+  {
+    ShaderSourceFolderCrawler shaderSourceCrawler(this);
+    shaderSourceCrawler.Crawl(*Paths::GetShaderCodePath());
+    if (shaderSourceCrawler.IsShaderUpdateRequired())
+    {
+      gRenderer.ScheduleShaderUpdate();
+    }
+    m_TimeBeforeNextCheck = TIMEOUT;
   }
 }
