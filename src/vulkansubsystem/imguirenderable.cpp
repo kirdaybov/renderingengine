@@ -5,8 +5,8 @@
 
 void ImGuiRenderable::CreateGraphicsPipeline()
 {
-  ShaderBinary* vsShader = gApplicationInstanceManager.GetInstance().GetShaderCompiler().GetShader("uivs");
-  ShaderBinary* psShader = gApplicationInstanceManager.GetInstance().GetShaderCompiler().GetShader("uips");
+  ShaderBinary* vsShader = gApp.GetShaderCompiler().GetShader("uivs");
+  ShaderBinary* psShader = gApp.GetShaderCompiler().GetShader("uips");
 
   VkShaderModule vertShaderModule = gRenderer.CreateShaderModule(vsShader->GetData(), vsShader->GetSize());
   VkShaderModule fragShaderModule = gRenderer.CreateShaderModule(psShader->GetData(), psShader->GetSize());

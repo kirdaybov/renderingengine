@@ -18,8 +18,8 @@ struct UniformBufferObject
 
 void MeshRenderable::CreateGraphicsPipeline()
 {
-  ShaderBinary* vsShader = gApplicationInstanceManager.GetInstance().GetShaderCompiler().GetShader("meshvs");
-  ShaderBinary* psShader = gApplicationInstanceManager.GetInstance().GetShaderCompiler().GetShader("meshps");
+  ShaderBinary* vsShader = gApp.GetShaderCompiler().GetShader("meshvs");
+  ShaderBinary* psShader = gApp.GetShaderCompiler().GetShader("meshps");
 
   VkShaderModule vertShaderModule = gRenderer.CreateShaderModule(vsShader->GetData(), vsShader->GetSize());
   VkShaderModule fragShaderModule = gRenderer.CreateShaderModule(psShader->GetData(), psShader->GetSize());
@@ -228,7 +228,7 @@ void MeshRenderable::UpdateUniformBuffer()
   auto currentTime = std::chrono::high_resolution_clock::now();
   float time = std::chrono::duration<float, std::chrono::seconds::period>(currentTime - startTime).count();
   UniformBufferObject ubo = {};
-  const GameState& gameState = gApplicationInstanceManager.GetInstance().GetGameState();
+  const GameState& gameState = gApp.GetGameState();
   auto model = glm::rotate(glm::mat4(1.0f), glm::radians(gameState.GetRotation(0)), glm::vec3(1.0f, 0.0f, 0.0f));
   model = glm::rotate(model, glm::radians(gameState.GetRotation(1)), glm::vec3(0.0f, 1.0f, 0.0f));
   model = glm::rotate(model, glm::radians(gameState.GetRotation(2)), glm::vec3(0.0f, 0.0f, 1.0f));

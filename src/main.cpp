@@ -5,6 +5,6 @@
 int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR pCmdLine, int nCmdShow)
 {
   gAssetManager.LoadAssets();
-  gApplicationInstanceManager.StartNewInstance();
+  gApp.Run();
   return 0;
 }

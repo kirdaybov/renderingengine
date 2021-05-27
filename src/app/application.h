@@ -34,25 +34,11 @@ public:
   Renderer& GetRenderer() { return m_Renderer; }
 
   GLFWwindow* GetWindow() const { return m_Window; }
+  static ApplicationInstance& GetInstance() { return m_Instance; }
 private:
+  static ApplicationInstance m_Instance;
   bool RegisterCreateAndShowWindow();
 };
 
-#define gApplicationInstanceManager ApplicationInstanceManager::GetSingletone()
-#define gApp ApplicationInstanceManager::GetSingletone().GetInstance()
-#define gRenderer ApplicationInstanceManager::GetSingletone().GetInstance().GetRenderer()
-
-class ApplicationInstanceManager
-{
-  static ApplicationInstanceManager m_Singletone;
-  ApplicationInstance m_Instance;
-public:
-  inline static ApplicationInstanceManager& GetSingletone() { return m_Singletone; }
-  ApplicationInstance& GetInstance(GLFWwindow* window) { return m_Instance; } //TODO: remove
-  ApplicationInstance& GetInstance() { return m_Instance; }
-  bool StartNewInstance()
-  {
-    m_Instance.Run();
-    return true;
-  }
-};
+#define gApp ApplicationInstance::GetInstance()
+#define gRenderer ApplicationInstance::GetInstance().GetRenderer()

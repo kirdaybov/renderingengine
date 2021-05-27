@@ -2,6 +2,8 @@
 #include "logger/logger.h"
 #include "imgui.h"
 
+ApplicationInstance ApplicationInstance::m_Instance;
+
 void CALLBACK MidiInProc(
   HMIDIIN   hMidiIn,
   UINT      wMsg,
@@ -19,12 +21,12 @@ void CALLBACK MidiInProc(
 
 void GlobalKeyCallback(GLFWwindow* window, int key, int scancode, int action, int mods)
 {
-  gApplicationInstanceManager.GetSingletone().GetInstance(window).KeyCallback(key, scancode, action, mods);
+  gApp.KeyCallback(key, scancode, action, mods);
 }
 
 void GlobalMouseKeyCallback(GLFWwindow* window, int key, int action, int mods)
 {
-  gApplicationInstanceManager.GetSingletone().GetInstance(window).MouseKeyCallback(key, action, mods);
+  gApp.MouseKeyCallback(key, action, mods);
 }
 
 void ApplicationInstance::MouseKeyCallback(int key, int action, int mods)
@@ -118,5 +120,3 @@ bool ApplicationInstance::RegisterCreateAndShowWindow()
   //glfwMakeContextCurrent(m_Window); //TODO: what is this?
   return true;
 }
-
-ApplicationInstanceManager ApplicationInstanceManager::m_Singletone;
