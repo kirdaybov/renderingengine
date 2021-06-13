@@ -48,7 +48,6 @@ class MeshRenderable : public IRenderable
   std::vector<uint32_t> m_Indices;
   Buffer m_VertexBuffer;
   Buffer m_IndexBuffer;
-  void LoadModelTinyObj();
   void LoadModelFBX();
 
   //

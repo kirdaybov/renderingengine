@@ -3,8 +3,6 @@
 #include "app/application.h"
 #define STB_IMAGE_IMPLEMENTATION
 #include <stb_image.h>
-#define TINYOBJLOADER_IMPLEMENTATION
-#include <tiny_obj_loader.h>
 #include "assetmanager/assetmanager.h"
 #include <fbxsdk.h>
 
@@ -452,44 +450,6 @@ void MeshRenderable::LoadModelFBX()
           
         }
       }
-    }
-  }
-}
-
-void MeshRenderable::LoadModelTinyObj()
-{
-  tinyobj::attrib_t attrib;
-  std::vector<tinyobj::shape_t> shapes;
-  std::vector<tinyobj::material_t> materials;
-  std::string warn, err;
-
-  if (!tinyobj::LoadObj(&attrib, &shapes, &materials, &warn, &err, *gAssetManager.GetAsset("chalet")->m_Path))
-  {
-    throw std::runtime_error(warn + err);
-  }
-
-  for (const auto& shape : shapes)
-  {
-    for (const auto& index : shape.mesh.indices)
-    {
-      Vertex vertex = {};
-
-      vertex.m_Position =
-      {
-        attrib.vertices[3 * index.vertex_index + 0],
-        attrib.vertices[3 * index.vertex_index + 1],
-        attrib.vertices[3 * index.vertex_index + 2]
-      };
-
-      vertex.m_TexCoord = {
-        attrib.texcoords[2 * index.texcoord_index + 0],
-        1.f - attrib.texcoords[2 * index.texcoord_index + 1]
-      };
-
-      //vertex.m_Color = { 1.0f, 1.0f, 1.0f };
-
-      m_Vertices.push_back(vertex);
-      m_Indices.push_back(static_cast<uint32_t>(m_Indices.size()));
     }
   }
 }
