@@ -4,21 +4,6 @@
 
 ApplicationInstance ApplicationInstance::m_Instance;
 
-void CALLBACK MidiInProc(
-  HMIDIIN   hMidiIn,
-  UINT      wMsg,
-  DWORD_PTR dwInstance,
-  DWORD_PTR dwParam1,
-  DWORD_PTR dwParam2
-)
-{
-  switch (wMsg)
-  {
-  case MIM_DATA: LOGF("wMsg=MIM_DATA, dwInstance=%08x, dwParam1=%08x, dwParam2=%08x\n", 
-    static_cast<unsigned int>(dwInstance), static_cast<unsigned int>(dwParam1), static_cast<unsigned int>(dwParam2)); break;
-  };
-}
-
 void GlobalKeyCallback(GLFWwindow* window, int key, int scancode, int action, int mods)
 {
   gApp.KeyCallback(key, scancode, action, mods);
@@ -50,14 +35,6 @@ void ApplicationInstance::Run()
   if (RegisterCreateAndShowWindow())
   {
     m_AppTimer.Start();
-    int numMidiDevs = midiInGetNumDevs();
-    if (numMidiDevs > 0)
-    {
-      LOGF("Midi devices found: %i", numMidiDevs);
-      HMIDIIN hMidiInput;
-      midiInOpen(&hMidiInput, 0, (DWORD_PTR)MidiInProc, 0, CALLBACK_FUNCTION);
-      midiInStart(hMidiInput);
-    }
     glfwSetKeyCallback(m_Window, GlobalKeyCallback);
     glfwSetMouseButtonCallback(m_Window, GlobalMouseKeyCallback);
 
