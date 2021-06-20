@@ -1,11 +1,11 @@
 #pragma once
 #include <chrono>
 
-// Use this class to acquire elapsed time between frames
 class AppTimer
 {
 public:
-  inline float GetFrameSeconds() const { return m_ElapsedSeconds; }
+  float GetFrameSeconds() const { return m_ElapsedSeconds; }
+
   void Start();
   void Update();
 

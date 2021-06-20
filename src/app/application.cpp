@@ -1,6 +1,5 @@
 #include "application.h"
 #include "logger/logger.h"
-#include "imgui.h"
 
 ApplicationInstance ApplicationInstance::m_Instance;
 
@@ -55,18 +54,15 @@ void ApplicationInstance::Run()
     {
       glfwPollEvents();
       m_InputState.Update();
-      ImGui::NewFrame();
-
-      ImGuiIO& io = ImGui::GetIO();
-
-      io.MousePos = ImVec2(m_InputState.GetMouseX(), m_InputState.GetMouseY());
-      io.MouseDown[0] = m_InputState.IsSwitchOn("LMB");
-      io.MouseDown[1] = m_InputState.IsSwitchOn("RMB");
-
+      m_ImGuiController.Update();
+      
       m_AppTimer.Update();
       m_GameState.Update();
       m_ShaderCompiler.Update();
-      ImGui::Render();
+      m_Renderer.Update();
+
+      // Render ImGui before drawing so that renderer could render it properly
+      m_ImGuiController.Render();
       m_Renderer.DrawFrame();
     }
     m_Renderer.DeviceWaitIdle();

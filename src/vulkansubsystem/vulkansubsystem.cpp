@@ -73,6 +73,29 @@ void Renderer::Cleanup()
   vkDestroyInstance(m_Instance, nullptr);
 }
 
+#define MEGABYTE (1024*1024)
+
+void Renderer::Update()
+{
+  if(ImGui::Begin("GPU stats"))
+  {
+    VkPhysicalDeviceMemoryBudgetPropertiesEXT budgetProperty;
+    budgetProperty.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MEMORY_BUDGET_PROPERTIES_EXT;
+    budgetProperty.pNext = nullptr;
+    VkPhysicalDeviceMemoryProperties2 memProperty;
+    memProperty.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MEMORY_PROPERTIES_2;
+    memProperty.pNext = &budgetProperty;
+    
+    vkGetPhysicalDeviceMemoryProperties2(m_PhysicalDevice, &memProperty);
+    for (int i = 0; i < memProperty.memoryProperties.memoryHeapCount; i++)
+    {
+      ImGui::Text("Heap %i: %.2f/%.2fMb", i, budgetProperty.heapUsage[i]/float(MEGABYTE), budgetProperty.heapBudget[i] / float(MEGABYTE));
+    }
+    
+    ImGui::End();
+  }
+}
+
 void Renderer::CleanupSwapChain()
 {
   vkDestroyImageView(m_Device, m_DepthImageView, nullptr);
@@ -122,7 +145,7 @@ void Renderer::RecreateSwapChain()
 
 void Renderer::CreateInstance()
 {
-  //ListAvailableExtensions();
+  ListAvailableExtensions();
   //ListAvailableValidationLayers();
 
   if (m_EnableValidationLayers && !CheckValidationLayerSupport())
@@ -218,6 +241,7 @@ std::vector<const char*> Renderer::GetRequiredExtensions() const
     extensions.push_back(VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
   extensions.push_back("VK_KHR_surface");
   extensions.push_back("VK_KHR_win32_surface");
+  extensions.push_back("VK_KHR_get_physical_device_properties2");
   return extensions;
 }
 

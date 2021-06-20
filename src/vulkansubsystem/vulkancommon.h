@@ -7,6 +7,6 @@
   VkResult result = code;                          \
   if (result != VK_SUCCESS)                        \
   {                                                \
-    DEBUG_BREAK("Vulkan error: %d", result);       \
+    DEBUG_BREAK("Vulkan error: %u", result);       \
   }                                                \
 }

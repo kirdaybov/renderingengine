@@ -40,6 +40,7 @@ class Renderer
 public:
   void Init(GLFWwindow* window);
   void Cleanup();
+  void Update();
 private:
 
   GLFWwindow* m_Window = nullptr;
@@ -147,6 +148,9 @@ private:
   void FreeCommandBuffers();
   VkCommandBuffer BeginSingleTimeCommands();
   void EndSingleTimeCommands(VkCommandBuffer commandBuffer);
+
+  // Memory querying
+  void QueryMemoryUsage();
 
 public:
   //

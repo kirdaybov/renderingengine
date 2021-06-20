@@ -7,6 +7,7 @@
 #include "input/inputstate.h"
 #include "apptimer/apptimer.h"
 #include "shadercompiler/shadercompiler.h"
+#include "imguicontroller/imguicontroller.h"
 
 class ApplicationInstance
 {
@@ -17,6 +18,7 @@ class ApplicationInstance
   InputState m_InputState;
   AppTimer m_AppTimer;
   ShaderCompiler m_ShaderCompiler;
+  ImGuiController m_ImGuiController;
 public:
   void Run();
   void ScheduleStop() { m_Stop = true; }
@@ -32,7 +34,7 @@ public:
   const AppTimer& GetTimer() const{ return m_AppTimer; }
   ShaderCompiler& GetShaderCompiler() { return m_ShaderCompiler; }
   Renderer& GetRenderer() { return m_Renderer; }
-
+  
   GLFWwindow* GetWindow() const { return m_Window; }
   static ApplicationInstance& GetInstance() { return m_Instance; }
 private:
@@ -42,3 +44,4 @@ private:
 
 #define gApp ApplicationInstance::GetInstance()
 #define gRenderer ApplicationInstance::GetInstance().GetRenderer()
+#define gInputState ApplicationInstance::GetInstance().GetInputState()
