@@ -74,4 +74,6 @@ class ImGuiRenderable : public IRenderable
   void OnCleanupSwapChain() override;
   void CreateGraphicsPipeline() override;  
   void Cleanup() override;
+
+  const char* GetName() const override { return "ImGui"; }
 };

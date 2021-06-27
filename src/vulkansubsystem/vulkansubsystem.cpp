@@ -77,7 +77,7 @@ void Renderer::Cleanup()
 
 void Renderer::Update()
 {
-  if(ImGui::Begin("GPU stats"))
+  if (ImGui::Begin("GPU stats"))
   {
     VkPhysicalDeviceMemoryBudgetPropertiesEXT budgetProperty;
     budgetProperty.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MEMORY_BUDGET_PROPERTIES_EXT;
@@ -92,6 +92,15 @@ void Renderer::Update()
       ImGui::Text("Heap %i: %.2f/%.2fMb", i, budgetProperty.heapUsage[i]/float(MEGABYTE), budgetProperty.heapBudget[i] / float(MEGABYTE));
     }
     
+    ImGui::End();
+  }
+
+  if (ImGui::Begin("Passes"))
+  {
+    for (auto& renderable : m_Renderables)
+    {
+      ImGui::Checkbox(renderable->GetName(), &renderable->GetShow());
+    }
     ImGui::End();
   }
 }
@@ -760,7 +769,10 @@ void Renderer::CreateCommandBuffers(uint32_t imageIdx)
     ctx.m_CommandBufferIdx = b;
     for (IRenderable* renderable : m_Renderables)
     {
-      renderable->Render(ctx);
+      if (renderable->GetShow())
+      {
+        renderable->Render(ctx);
+      }
     }
 
     vkCmdEndRenderPass(m_CommandBuffers[b]);
