@@ -4,9 +4,10 @@
 #include <vulkansubsystem/buffer.h>
 #include "vertexdescription.h"
 
-class MeshRenderable : public IRenderable
+// Renders two triangles to cover the whole screen
+class ScreenRenderable : public IRenderable
 {
-  VkDescriptorSetLayout m_DescriptorSetLayout;
+  //VkDescriptorSetLayout m_DescriptorSetLayout;
   VkPipelineLayout m_PipelineLayout;
   VkPipeline m_GraphicsPipeline;
   void CreateVertexBuffer();
@@ -19,13 +20,13 @@ class MeshRenderable : public IRenderable
 
   //
   void CreateDescriptorSetLayout();
-  Buffer m_UniformBuffer;
+  //Buffer m_UniformBuffer;
   void CreateUniformBuffer();
   void UpdateUniformBuffer();
 
   //
-  VkDescriptorPool m_DescriptorPool;
-  std::vector<VkDescriptorSet> m_DescriptorSets;
+  //VkDescriptorPool m_DescriptorPool;
+  //std::vector<VkDescriptorSet> m_DescriptorSets;
   void CreateDescriptorPool();
   void CreateDescriptorSets();
 
@@ -33,14 +34,14 @@ class MeshRenderable : public IRenderable
   void CreateImage(const char* name, VkImage& image, VkDeviceMemory& memory);
   void CreateTextureImage();
 
-  VkImage m_TextureImage;
-  VkDeviceMemory m_TextureImageMemory;
-  VkImageView m_TextureImageView;
+  //VkImage m_TextureImage;
+  //VkDeviceMemory m_TextureImageMemory;
+  //VkImageView m_TextureImageView;
 
   void CreateTextureImageView();
 
   //
-  VkSampler m_TextureSampler;
+  //VkSampler m_TextureSampler;
   void CreateTextureSampler();
 
 
@@ -51,5 +52,5 @@ class MeshRenderable : public IRenderable
   void CreateGraphicsPipeline() override;
   void Cleanup() override;
 
-  const char* GetName() const override { return "Mesh"; }
+  const char* GetName() const override { return "Screen"; }
 };

@@ -18,6 +18,7 @@
 
 #include "imguirenderable.h"
 #include "meshrenderable.h"
+#include "screenrenderable.h"
 
 void Renderer::Init(GLFWwindow* window)
 {
@@ -35,6 +36,7 @@ void Renderer::Init(GLFWwindow* window)
   CreateRenderPass();
 
   m_Renderables.push_back(new MeshRenderable());
+  m_Renderables.push_back(new ScreenRenderable());
   m_Renderables.push_back(new ImGuiRenderable());
   
   CreateCommandPool();
