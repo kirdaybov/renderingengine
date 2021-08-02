@@ -19,6 +19,7 @@
 #include "imguirenderable.h"
 #include "meshrenderable.h"
 #include "screenrenderable.h"
+#include <thread>
 
 void Renderer::Init(GLFWwindow* window)
 {
@@ -101,8 +102,11 @@ void Renderer::Update()
   {
     for (auto& renderable : m_Renderables)
     {
-      ImGui::Checkbox(renderable->GetName(), &renderable->GetShow());
+      ImGui::Checkbox(renderable->GetName(), &renderable->GetShow());      
     }
+
+    ImGui::Checkbox("Lock FPS", &m_IsFPSLocked);
+    ImGui::DragInt("Lock FPS at", &m_LockedFPS, 1, 30, 144);
     ImGui::End();
   }
 }
@@ -842,6 +846,15 @@ void Renderer::DrawFrame()
   presentInfo.pSwapchains = swapChains;
   presentInfo.pImageIndices = &imageIndex;
   presentInfo.pResults = nullptr;
+
+  if (m_IsFPSLocked)
+  {
+    float waitTime = 1.f / m_LockedFPS - gApp.GetTimer().GetFrameSeconds();
+    if (waitTime > 0)
+    {
+      std::this_thread::sleep_for(std::chrono::milliseconds(static_cast<int>(waitTime*1000)));
+    }
+  }
   vkQueuePresentKHR(m_PresentQueue, &presentInfo);
 
   m_CurrentFrame = (m_CurrentFrame + 1) % MaxFramesInFlight;

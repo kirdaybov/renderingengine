@@ -164,6 +164,8 @@ private:
   {
     MaxFramesInFlight = 1
   };
+  int m_LockedFPS = 144;
+  bool m_IsFPSLocked = true;
   size_t m_TotalFrame = 0;
   size_t m_CurrentFrame = 0;
   std::vector<VkSemaphore> m_ImageAvailableSemaphores;
