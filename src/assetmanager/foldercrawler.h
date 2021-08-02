@@ -15,11 +15,6 @@ struct FileNode
     File
   };
 
-  FileNode(Type type, std::string name)
-    :m_Type(type)
-    , m_Name(name)
-  {}
-
   Type m_Type;
   std::string m_Name;
 };
@@ -62,10 +57,10 @@ private:
     {
       if (std::string(findFileData.cFileName) != "." && std::string(findFileData.cFileName) != "..")
       {
-        FileNode Node = FileNode(
+        FileNode Node = {
           findFileData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY ? FileNode::Folder : FileNode::File,
           findFileData.cFileName
-        );
+        };
         files.push_back(Node);
       }
 
