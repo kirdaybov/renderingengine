@@ -80,6 +80,8 @@ void Renderer::Cleanup()
 
 void Renderer::Update()
 {
+  BufferPool::GetBufferPool().Update();
+
   if (ImGui::Begin("GPU stats"))
   {
     VkPhysicalDeviceMemoryBudgetPropertiesEXT budgetProperty;
@@ -90,7 +92,7 @@ void Renderer::Update()
     memProperty.pNext = &budgetProperty;
     
     vkGetPhysicalDeviceMemoryProperties2(m_PhysicalDevice, &memProperty);
-    for (int i = 0; i < memProperty.memoryProperties.memoryHeapCount; i++)
+    for (unsigned int i = 0; i < memProperty.memoryProperties.memoryHeapCount; i++)
     {
       ImGui::Text("Heap %i: %.2f/%.2fMb", i, budgetProperty.heapUsage[i]/float(MEGABYTE), budgetProperty.heapBudget[i] / float(MEGABYTE));
     }
@@ -715,11 +717,15 @@ void Renderer::CreateCommandPool()
   }
 }
 
-void Renderer::FreeCommandBuffers()
+void Renderer::FreeCommandBuffers(uint32_t imageIdx)
 {
+  //if (m_CommandBuffers.size() > 0)
+  //{
+  //  vkFreeCommandBuffers(m_Device, m_CommandPool, static_cast<uint32_t>(m_CommandBuffers.size()), m_CommandBuffers.data());
+  //}
   if (m_CommandBuffers.size() > 0)
   {
-    vkFreeCommandBuffers(m_Device, m_CommandPool, static_cast<uint32_t>(m_CommandBuffers.size()), m_CommandBuffers.data());
+    vkFreeCommandBuffers(m_Device, m_CommandPool, 1, &m_CommandBuffers[imageIdx]);
   }
 }
 
@@ -813,7 +819,7 @@ void Renderer::DrawFrame()
     m_ShaderUpdateScheduled = false;
   }
 
-  FreeCommandBuffers();
+  FreeCommandBuffers(imageIndex);
   CreateCommandBuffers(imageIndex);
 
   VkSubmitInfo submitInfo = {};
@@ -934,6 +940,13 @@ void Renderer::CreateBuffer(VkDeviceSize size, VkBufferUsageFlags usage, VkMemor
   }
 
   vkBindBufferMemory(m_Device, buffer, bufferMemory, 0);
+}
+
+Buffer* Renderer::CreateBuffer(VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties)
+{
+  Buffer* buffer = BufferPool::GetBufferPool().GetBuffer();
+  CreateBuffer(size, usage, properties, *buffer);
+  return buffer;
 }
 
 uint32_t Renderer::FindMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties)

@@ -47,3 +47,49 @@ void Buffer::UnmapMemory()
   vkUnmapMemory(gRenderer.GetDevice(), m_BufferMemory);
   m_Mapped = false;
 }
+
+void Buffer::Release()
+{
+  ASSERT(!m_Released);
+  BufferPool::GetBufferPool().ReleaseBuffer(this);
+  m_Released = true;
+}
+
+BufferPool BufferPool::ms_BufferPool;
+
+BufferPool::BufferPool()
+{
+  for (int i = 0; i < MaxBuffers; i++)
+  {
+    m_Buffers.push_back(new Buffer());
+  }
+}
+
+BufferPool::~BufferPool()
+{
+}
+
+Buffer* BufferPool::GetBuffer()
+{
+  Buffer* buffer = m_Buffers.front();
+  buffer->m_Released = false;
+  m_Buffers.pop_front();
+  return buffer;
+}
+
+void BufferPool::ReleaseBuffer(Buffer* buffer)
+{
+  m_ReleasedBuffers[m_Frame].push_back(buffer);
+}
+
+void BufferPool::Update()
+{
+  int updateIdx = (m_Frame + 1) % 2;
+  for (auto releasedBuffer : m_ReleasedBuffers[updateIdx])
+  {
+    releasedBuffer->Cleanup();
+    m_Buffers.push_front(releasedBuffer);
+  }
+  m_ReleasedBuffers[updateIdx].clear();
+  m_Frame = updateIdx;
+}

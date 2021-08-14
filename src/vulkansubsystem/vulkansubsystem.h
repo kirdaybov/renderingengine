@@ -145,7 +145,7 @@ private:
   void CreateCommandPool();
   std::vector<VkCommandBuffer> m_CommandBuffers;
   void CreateCommandBuffers(uint32_t imageIdx);
-  void FreeCommandBuffers();
+  void FreeCommandBuffers(uint32_t imageIdx);
   VkCommandBuffer BeginSingleTimeCommands();
   void EndSingleTimeCommands(VkCommandBuffer commandBuffer);
 
@@ -162,7 +162,7 @@ private:
   bool m_ShaderUpdateScheduled = false;
   enum
   {
-    MaxFramesInFlight = 1
+    MaxFramesInFlight = 2
   };
   int m_LockedFPS = 144;
   bool m_IsFPSLocked = true;
@@ -190,6 +190,7 @@ public:
   VkShaderModule CreateShaderModule(char* code, int size);
   void CreateBuffer(VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties, Buffer& buffer);
   void CreateBuffer(VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties, VkBuffer& buffer, VkDeviceMemory& bufferMemory);
+  Buffer* CreateBuffer(VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties);
   void CreateImage(uint32_t width, uint32_t height, VkFormat format, VkImageTiling tiling, VkImageUsageFlags usage, VkMemoryPropertyFlags properties, VkImage& image, VkDeviceMemory& imageMemory);
   VkImageView CreateImageView(VkImage image, VkFormat format, VkImageAspectFlags aspectFlags);
   void TransitionImageLayout(VkImage image, VkFormat format, VkImageLayout oldLayout, VkImageLayout newLayout);

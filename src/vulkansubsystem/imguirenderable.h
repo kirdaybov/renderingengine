@@ -53,13 +53,16 @@ class ImGuiRenderable : public IRenderable
   VkDescriptorPool m_ImGuiDescriptorPool;
   VkDescriptorSetLayout m_ImGuiDescriptorSetLayout;
   VkDescriptorSet m_ImGuiDescriptorSet;
-  Buffer m_ImGuiVertexBuffer;
-  Buffer m_ImGuiIndexBuffer;
+  Buffer* m_ImGuiVertexBuffer;
+  Buffer* m_ImGuiIndexBuffer;
   
   VkDeviceMemory m_ImGuiFontMemory;
   VkImage m_ImGuiFontImage;
   VkImageView m_ImGuiFontView;
   VkSampler m_ImGuiFontSampler;
+
+  int m_VertexCount = 0;
+  int m_IndexCount = 0;
 
 
   struct ImGuiConst

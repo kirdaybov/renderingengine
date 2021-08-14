@@ -310,13 +310,28 @@ void ImGuiRenderable::UpdateImGuiBuffers(bool unmap)
   void* vertexData;
   void* indexData;
 
-  m_ImGuiVertexBuffer.Cleanup(); // TODO: I'm curious if there's less desctructive way?
-  gRenderer.CreateBuffer(vertexBufferSize, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT, m_ImGuiVertexBuffer);
-  m_ImGuiVertexBuffer.MapMemory(vertexData);
-  
-  m_ImGuiIndexBuffer.Cleanup();
-  gRenderer.CreateBuffer(indexBufferSize, VK_BUFFER_USAGE_INDEX_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT, m_ImGuiIndexBuffer);
-  m_ImGuiIndexBuffer.MapMemory(indexData);
+  if (imDrawData->TotalVtxCount != m_VertexCount)
+  {
+    if (m_ImGuiVertexBuffer)
+    {
+      m_ImGuiVertexBuffer->Release();
+    }
+    m_ImGuiVertexBuffer = gRenderer.CreateBuffer(vertexBufferSize, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT);
+    m_VertexCount = imDrawData->TotalVtxCount;
+  }
+
+  if (imDrawData->TotalIdxCount != m_IndexCount)
+  {
+    if (m_ImGuiIndexBuffer)
+    {
+      m_ImGuiIndexBuffer->Release();
+    }
+    m_ImGuiIndexBuffer = gRenderer.CreateBuffer(indexBufferSize, VK_BUFFER_USAGE_INDEX_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT);
+    m_IndexCount = imDrawData->TotalIdxCount;
+  }
+
+  m_ImGuiVertexBuffer->MapMemory(vertexData);
+  m_ImGuiIndexBuffer->MapMemory(indexData);
 
   // Upload data
   ImDrawVert* vtxDst = (ImDrawVert*)vertexData;
@@ -333,17 +348,20 @@ void ImGuiRenderable::UpdateImGuiBuffers(bool unmap)
   // Flush to make writes visible to GPU
   VkMappedMemoryRange mappedRange = {};
   mappedRange.sType = VK_STRUCTURE_TYPE_MAPPED_MEMORY_RANGE;
-  mappedRange.memory = m_ImGuiVertexBuffer.GetBufferMemory();
+  mappedRange.memory = m_ImGuiVertexBuffer->GetBufferMemory();
   mappedRange.offset = 0;
   mappedRange.size = VK_WHOLE_SIZE;
   vkFlushMappedMemoryRanges(gRenderer.GetDevice(), 1, &mappedRange);
 
   //VkMappedMemoryRange mappedRange;
   //mappedRange.sType = VK_STRUCTURE_TYPE_MAPPED_MEMORY_RANGE;
-  mappedRange.memory = m_ImGuiIndexBuffer.GetBufferMemory();
+  mappedRange.memory = m_ImGuiIndexBuffer->GetBufferMemory();
   mappedRange.offset = 0;
   mappedRange.size = VK_WHOLE_SIZE;
   vkFlushMappedMemoryRanges(gRenderer.GetDevice(), 1, &mappedRange);
+
+  m_ImGuiVertexBuffer->UnmapMemory();
+  m_ImGuiIndexBuffer->UnmapMemory();
 }
 
 void ImGuiRenderable::Init()
@@ -396,8 +414,8 @@ void ImGuiRenderable::Render(RenderContext& ctx)
   if (imDrawData && imDrawData->CmdListsCount > 0) {
 
     VkDeviceSize offsets[1] = { 0 };
-    vkCmdBindVertexBuffers(commandBuffer, 0, 1, &m_ImGuiVertexBuffer.GetBuffer(), offsets);
-    vkCmdBindIndexBuffer(commandBuffer, m_ImGuiIndexBuffer.GetBuffer(), 0, VK_INDEX_TYPE_UINT16);
+    vkCmdBindVertexBuffers(commandBuffer, 0, 1, &m_ImGuiVertexBuffer->GetBuffer(), offsets);
+    vkCmdBindIndexBuffer(commandBuffer, m_ImGuiIndexBuffer->GetBuffer(), 0, VK_INDEX_TYPE_UINT16);
 
     for (int32_t i = 0; i < imDrawData->CmdListsCount; i++)
     {
@@ -428,8 +446,6 @@ void ImGuiRenderable::OnCleanupSwapChain()
 
 void ImGuiRenderable::Cleanup()
 {
-  m_ImGuiIndexBuffer.Cleanup();
-  m_ImGuiVertexBuffer.Cleanup();
   vkDestroySampler(gRenderer.GetDevice(), m_ImGuiFontSampler, nullptr);
   vkDestroyImageView(gRenderer.GetDevice(), m_ImGuiFontView, nullptr);
   vkDestroyImage(gRenderer.GetDevice(), m_ImGuiFontImage, nullptr);
