@@ -28,24 +28,22 @@ void Buffer::Cleanup()
 
 void Buffer::CopyDataToBufferMemory(VkDevice device, VkDeviceSize size, void* data)
 {
-  void* mappedData;
-  MapMemory(mappedData);
-  memcpy(mappedData, data, (size_t)size);
+  MapMemory();
+  memcpy(m_Mapped, data, (size_t)size);
   UnmapMemory();
 }
 
-void Buffer::MapMemory(void*& mappedData)
+void Buffer::MapMemory()
 {
   ASSERT(!m_Mapped);
-  VK_CHECK(vkMapMemory(gRenderer.GetDevice(), m_BufferMemory, 0, VK_WHOLE_SIZE, 0, &mappedData));
-  m_Mapped = true;
+  VK_CHECK(vkMapMemory(gRenderer.GetDevice(), m_BufferMemory, 0, VK_WHOLE_SIZE, 0, &m_Mapped));
 }
 
 void Buffer::UnmapMemory()
 {
   ASSERT(m_Mapped);
   vkUnmapMemory(gRenderer.GetDevice(), m_BufferMemory);
-  m_Mapped = false;
+  m_Mapped = nullptr;
 }
 
 void Buffer::Release()

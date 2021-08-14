@@ -305,11 +305,6 @@ void ImGuiRenderable::UpdateImGuiBuffers(bool unmap)
     return;
   }
 
-  // TODO: Update buffers only if vertex or index count has been changed compared to current buffer size
-
-  void* vertexData;
-  void* indexData;
-
   if (imDrawData->TotalVtxCount != m_VertexCount)
   {
     if (m_ImGuiVertexBuffer)
@@ -317,6 +312,7 @@ void ImGuiRenderable::UpdateImGuiBuffers(bool unmap)
       m_ImGuiVertexBuffer->Release();
     }
     m_ImGuiVertexBuffer = gRenderer.CreateBuffer(vertexBufferSize, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT);
+    m_ImGuiVertexBuffer->MapMemory();
     m_VertexCount = imDrawData->TotalVtxCount;
   }
 
@@ -327,15 +323,13 @@ void ImGuiRenderable::UpdateImGuiBuffers(bool unmap)
       m_ImGuiIndexBuffer->Release();
     }
     m_ImGuiIndexBuffer = gRenderer.CreateBuffer(indexBufferSize, VK_BUFFER_USAGE_INDEX_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT);
+    m_ImGuiIndexBuffer->MapMemory();
     m_IndexCount = imDrawData->TotalIdxCount;
   }
 
-  m_ImGuiVertexBuffer->MapMemory(vertexData);
-  m_ImGuiIndexBuffer->MapMemory(indexData);
-
   // Upload data
-  ImDrawVert* vtxDst = (ImDrawVert*)vertexData;
-  ImDrawIdx* idxDst = (ImDrawIdx*)indexData;
+  ImDrawVert* vtxDst = (ImDrawVert*)m_ImGuiVertexBuffer->GetMapped();
+  ImDrawIdx* idxDst = (ImDrawIdx*)m_ImGuiIndexBuffer->GetMapped();
 
   for (int n = 0; n < imDrawData->CmdListsCount; n++) {
     const ImDrawList* cmd_list = imDrawData->CmdLists[n];
@@ -359,9 +353,6 @@ void ImGuiRenderable::UpdateImGuiBuffers(bool unmap)
   mappedRange.offset = 0;
   mappedRange.size = VK_WHOLE_SIZE;
   vkFlushMappedMemoryRanges(gRenderer.GetDevice(), 1, &mappedRange);
-
-  m_ImGuiVertexBuffer->UnmapMemory();
-  m_ImGuiIndexBuffer->UnmapMemory();
 }
 
 void ImGuiRenderable::Init()

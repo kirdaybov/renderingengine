@@ -8,16 +8,17 @@ public:
   Buffer();
   void Cleanup();
   void CopyDataToBufferMemory(VkDevice device, VkDeviceSize size, void* data);
-  void MapMemory(void*& mappedData);
+  void MapMemory();
   void UnmapMemory();
   const VkBuffer& GetBuffer() { return m_Buffer; }
   const VkDeviceMemory& GetBufferMemory() { return m_BufferMemory; }
   void Release();
+  void* GetMapped() { return m_Mapped; }
 private:
   bool m_Released = false;
   VkBuffer m_Buffer;
   VkDeviceMemory m_BufferMemory;
-  bool m_Mapped;
+  void* m_Mapped;
   friend class Renderer;
   friend class BufferPool;
 };
