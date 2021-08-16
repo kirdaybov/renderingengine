@@ -2,10 +2,12 @@
 #include <vulkan/vulkan.h>
 #include <list>
 
+class BufferPool;
+
 class Buffer
 {
 public:
-  Buffer();
+  Buffer(BufferPool& bufferPool);
   void Cleanup();
   void CopyDataToBufferMemory(VkDevice device, VkDeviceSize size, void* data);
   void MapMemory();
@@ -19,6 +21,7 @@ private:
   VkBuffer m_Buffer;
   VkDeviceMemory m_BufferMemory;
   void* m_Mapped;
+  BufferPool& m_BufferPool;
   friend class Renderer;
   friend class BufferPool;
 };
@@ -28,14 +31,13 @@ class BufferPool
 public:
   BufferPool();
   ~BufferPool();
-  enum { MaxBuffers = 10 };
+  enum { MaxBuffers = 50 };
   Buffer* GetBuffer();
-  static BufferPool& GetBufferPool() { return ms_BufferPool; }
   void ReleaseBuffer(Buffer* buffer);
   void Update();
 private:
   std::list<Buffer*> m_Buffers;
   std::list<Buffer*> m_ReleasedBuffers[2];
   int m_Frame = 0;
-  static BufferPool ms_BufferPool;
+  int m_BuffersInUse = 0;
 };

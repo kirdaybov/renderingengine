@@ -1,3 +1,8 @@
+struct UniformBufferObject
+{
+	uint frameIdx;
+} ubo;
+
 struct VSOutput
 {
 	float4 pos : SV_POSITION;
@@ -18,6 +23,31 @@ struct Material
 
 #define LARGE_DISTANCE 999999.9f
 
+uint wang_hash(inout uint seed)
+{
+    seed = uint(seed ^ uint(61)) ^ uint(seed >> uint(16));
+    seed *= uint(9);
+    seed = seed ^ (seed >> 4);
+    seed *= uint(0x27d4eb2d);
+    seed = seed ^ (seed >> 15);
+    return seed;
+}
+ 
+float RandomFloat01(inout uint state)
+{
+    return float(wang_hash(state)) / 4294967296.0;
+}
+ 
+float3 RandomUnitVector(inout uint state)
+{
+    float z = RandomFloat01(state) * 2.0f - 1.0f;
+    float a = RandomFloat01(state) * 2.0f * 3.14;
+    float r = sqrt(1.0f - z * z);
+    float x = r * cos(a);
+    float y = r * sin(a);
+    return float3(x, y, z);
+}
+
 float checkSphere(Ray ray, float4 sphere, Material mat, out Ray outRay)
 {
 	float3 L = sphere.xyz - ray.origin;
@@ -34,7 +64,8 @@ float checkSphere(Ray ray, float4 sphere, Material mat, out Ray outRay)
 	float traveled = tCA - tHC;
 	float3 hit = ray.origin + traveled*ray.dir;
 	outRay.origin = hit;
-	float3 hitNormal = normalize(hit - sphere.xyz);
+	static uint gRngState = uint(uint(ray.dir.x) * uint(1973) + uint(ray.dir.y) * uint(9277) + uint(ubo.frameIdx) * uint(26699)) | uint(1);
+	float3 hitNormal = normalize(normalize(hit - sphere.xyz) + 0.1f*RandomUnitVector(gRngState));
 	outRay.dir = ray.dir + 2 * dot(-ray.dir, hitNormal) * hitNormal;
 	outRay.color = mat.diffuse;
 	return traveled;
@@ -79,7 +110,7 @@ float3 traceRay(Ray ray, out Ray outRay)
 
 float3 main(VSOutput input) : SV_Target
 {
-	float2 screen = float2(1920.f, 1080.f);
+    float2 screen = float2(1920.f, 1080.f);
 	float aspectRatio = screen.x/screen.y;
 	
 	// z+ towards screen

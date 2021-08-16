@@ -185,6 +185,8 @@ private:
   VkFormat FindDepthFormat();
   bool HasStencilComponent(VkFormat format);
 
+  BufferPool m_BufferPool;
+
 //TODO: maybe it shouldn't be public?
 public:
   VkShaderModule CreateShaderModule(char* code, int size);
@@ -201,4 +203,5 @@ public:
   size_t GetSwapChainImagesCount() { return m_SwapChainImages.size(); }
   VkDevice GetDevice() { return m_Device; }
   VkRenderPass GetRenderPass() { return m_RenderPass; }
+  int GetFrameNumber() const { return m_TotalFrame; }
 };

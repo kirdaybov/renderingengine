@@ -7,26 +7,26 @@
 // Renders two triangles to cover the whole screen
 class ScreenRenderable : public IRenderable
 {
-  //VkDescriptorSetLayout m_DescriptorSetLayout;
+  VkDescriptorSetLayout m_DescriptorSetLayout;
   VkPipelineLayout m_PipelineLayout;
   VkPipeline m_GraphicsPipeline;
   void CreateVertexBuffer();
   void CreateIndexBuffer();
   std::vector<Vertex> m_Vertices;
   std::vector<uint32_t> m_Indices;
-  Buffer m_VertexBuffer;
-  Buffer m_IndexBuffer;
+  Buffer* m_VertexBuffer;
+  Buffer* m_IndexBuffer;
   void LoadModelFBX();
 
   //
   void CreateDescriptorSetLayout();
-  //Buffer m_UniformBuffer;
+  Buffer* m_UniformBuffer;
   void CreateUniformBuffer();
   void UpdateUniformBuffer();
 
   //
-  //VkDescriptorPool m_DescriptorPool;
-  //std::vector<VkDescriptorSet> m_DescriptorSets;
+  VkDescriptorPool m_DescriptorPool;
+  std::vector<VkDescriptorSet> m_DescriptorSets;
   void CreateDescriptorPool();
   void CreateDescriptorSets();
 

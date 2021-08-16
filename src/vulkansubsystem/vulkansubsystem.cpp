@@ -80,7 +80,7 @@ void Renderer::Cleanup()
 
 void Renderer::Update()
 {
-  BufferPool::GetBufferPool().Update();
+  m_BufferPool.Update();
 
   if (ImGui::Begin("GPU stats"))
   {
@@ -944,7 +944,7 @@ void Renderer::CreateBuffer(VkDeviceSize size, VkBufferUsageFlags usage, VkMemor
 
 Buffer* Renderer::CreateBuffer(VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties)
 {
-  Buffer* buffer = BufferPool::GetBufferPool().GetBuffer();
+  Buffer* buffer = m_BufferPool.GetBuffer();
   CreateBuffer(size, usage, properties, *buffer);
   return buffer;
 }

@@ -13,13 +13,13 @@ class MeshRenderable : public IRenderable
   void CreateIndexBuffer();
   std::vector<Vertex> m_Vertices;
   std::vector<uint32_t> m_Indices;
-  Buffer m_VertexBuffer;
-  Buffer m_IndexBuffer;
+  Buffer* m_VertexBuffer;
+  Buffer* m_IndexBuffer;
   void LoadModelFBX();
 
   //
   void CreateDescriptorSetLayout();
-  Buffer m_UniformBuffer;
+  Buffer* m_UniformBuffer;
   void CreateUniformBuffer();
   void UpdateUniformBuffer();
 

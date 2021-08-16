@@ -1,10 +1,12 @@
 #include "buffer.h"
 #include "app/application.h"
+#include "imgui.h"
 
-Buffer::Buffer()
+Buffer::Buffer(BufferPool& bufferPool)
   : m_Buffer(VK_NULL_HANDLE)
   , m_BufferMemory(VK_NULL_HANDLE)
   , m_Mapped(false)
+  , m_BufferPool(bufferPool)
 {
 }
 
@@ -49,17 +51,15 @@ void Buffer::UnmapMemory()
 void Buffer::Release()
 {
   ASSERT(!m_Released);
-  BufferPool::GetBufferPool().ReleaseBuffer(this);
+  m_BufferPool.ReleaseBuffer(this);
   m_Released = true;
 }
-
-BufferPool BufferPool::ms_BufferPool;
 
 BufferPool::BufferPool()
 {
   for (int i = 0; i < MaxBuffers; i++)
   {
-    m_Buffers.push_back(new Buffer());
+    m_Buffers.push_back(new Buffer(*this));
   }
 }
 
@@ -72,6 +72,7 @@ Buffer* BufferPool::GetBuffer()
   Buffer* buffer = m_Buffers.front();
   buffer->m_Released = false;
   m_Buffers.pop_front();
+  m_BuffersInUse++;
   return buffer;
 }
 
@@ -82,11 +83,17 @@ void BufferPool::ReleaseBuffer(Buffer* buffer)
 
 void BufferPool::Update()
 {
+  if (ImGui::Begin("Buffer Pool"))
+  {
+    ImGui::Text("Buffers in use %i/%i", m_BuffersInUse, MaxBuffers);
+    ImGui::End();
+  }
   int updateIdx = (m_Frame + 1) % 2;
   for (auto releasedBuffer : m_ReleasedBuffers[updateIdx])
   {
     releasedBuffer->Cleanup();
     m_Buffers.push_front(releasedBuffer);
+    m_BuffersInUse--;
   }
   m_ReleasedBuffers[updateIdx].clear();
   m_Frame = updateIdx;

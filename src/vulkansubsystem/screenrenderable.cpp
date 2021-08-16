@@ -8,10 +8,11 @@
 
 struct UniformBufferObject
 {
-  glm::mat4 model;
-  glm::mat4 view;
-  glm::mat4 proj;
-  glm::fvec3 sunDirection;
+  //glm::mat4 model;
+  //glm::mat4 view;
+  //glm::mat4 proj;
+  //glm::fvec3 sunDirection;
+  glm::i32vec1 frameIdx;
 };
 
 void ScreenRenderable::CreateGraphicsPipeline()
@@ -115,8 +116,8 @@ void ScreenRenderable::CreateGraphicsPipeline()
 
   VkPipelineLayoutCreateInfo pipelineLayoutInfo = {};
   pipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
-  pipelineLayoutInfo.setLayoutCount = 0;//1; // Optional
-  pipelineLayoutInfo.pSetLayouts = nullptr;//&m_DescriptorSetLayout; // Optional
+  pipelineLayoutInfo.setLayoutCount = 1; // Optional
+  pipelineLayoutInfo.pSetLayouts = &m_DescriptorSetLayout; // Optional
   pipelineLayoutInfo.pushConstantRangeCount = 0; // Optional
   pipelineLayoutInfo.pPushConstantRanges = nullptr; // Optional
   pipelineLayoutInfo.pNext = nullptr;
@@ -164,37 +165,35 @@ void ScreenRenderable::CreateVertexBuffer()
 {
   VkDeviceSize bufferSize = sizeof(Vertex) * m_Vertices.size();
 
-  Buffer stagingBuffer;
-  gRenderer.CreateBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, stagingBuffer);
-  stagingBuffer.CopyDataToBufferMemory(gRenderer.GetDevice(), bufferSize, m_Vertices.data());
-  gRenderer.CreateBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, m_VertexBuffer);
-  gRenderer.CopyBuffer(stagingBuffer, m_VertexBuffer, bufferSize);
-  stagingBuffer.Cleanup();
+  Buffer* stagingBuffer = gRenderer.CreateBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
+  stagingBuffer->CopyDataToBufferMemory(gRenderer.GetDevice(), bufferSize, m_Vertices.data());
+  m_VertexBuffer = gRenderer.CreateBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
+  gRenderer.CopyBuffer(*stagingBuffer, *m_VertexBuffer, bufferSize);
+  stagingBuffer->Release();
 }
 
 void ScreenRenderable::CreateIndexBuffer()
 {
   VkDeviceSize bufferSize = sizeof(m_Indices[0]) * m_Indices.size();
 
-  Buffer stagingBuffer;
-  gRenderer.CreateBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, stagingBuffer);
-  stagingBuffer.CopyDataToBufferMemory(gRenderer.GetDevice(), bufferSize, m_Indices.data());
-  gRenderer.CreateBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, m_IndexBuffer);
-  gRenderer.CopyBuffer(stagingBuffer, m_IndexBuffer, bufferSize);
-  stagingBuffer.Cleanup();
+  Buffer* stagingBuffer = gRenderer.CreateBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
+  stagingBuffer->CopyDataToBufferMemory(gRenderer.GetDevice(), bufferSize, m_Indices.data());
+  m_IndexBuffer = gRenderer.CreateBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
+  gRenderer.CopyBuffer(*stagingBuffer, *m_IndexBuffer, bufferSize);
+  stagingBuffer->Release();
 }
 
 void ScreenRenderable::CreateDescriptorSetLayout()
 {
-  //std::array<VkDescriptorSetLayoutBinding, 2> bindings;
-  //
-  //// ubo layout binding
-  //bindings[0].binding = 0;
-  //bindings[0].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-  //bindings[0].descriptorCount = 1;
-  //bindings[0].stageFlags = VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT;
-  //bindings[0].pImmutableSamplers = nullptr;
-  //
+  std::array<VkDescriptorSetLayoutBinding, 1> bindings;
+  
+  // ubo layout binding
+  bindings[0].binding = 0;
+  bindings[0].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+  bindings[0].descriptorCount = 1;
+  bindings[0].stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
+  bindings[0].pImmutableSamplers = nullptr;
+  
   //// texture binding
   //bindings[1].binding = 1;
   //bindings[1].descriptorCount = 1;
@@ -202,111 +201,82 @@ void ScreenRenderable::CreateDescriptorSetLayout()
   //bindings[1].pImmutableSamplers = nullptr;
   //bindings[1].stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
   //
-  //VkDescriptorSetLayoutCreateInfo layoutInfo = {};
-  //layoutInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
-  //layoutInfo.bindingCount = static_cast<uint32_t>(bindings.size());
-  //layoutInfo.pBindings = bindings.data();
-  //
-  //if (vkCreateDescriptorSetLayout(gRenderer.GetDevice(), &layoutInfo, nullptr, &m_DescriptorSetLayout) != VK_SUCCESS)
-  //{
-  //  throw std::runtime_error("failed to create descriptor set layout!");
-  //}
+  VkDescriptorSetLayoutCreateInfo layoutInfo = {};
+  layoutInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
+  layoutInfo.bindingCount = static_cast<uint32_t>(bindings.size());
+  layoutInfo.pBindings = bindings.data();
+  
+  if (vkCreateDescriptorSetLayout(gRenderer.GetDevice(), &layoutInfo, nullptr, &m_DescriptorSetLayout) != VK_SUCCESS)
+  {
+    throw std::runtime_error("failed to create descriptor set layout!");
+  }
 }
 
 void ScreenRenderable::CreateUniformBuffer()
 {
-  //VkDeviceSize bufferSize = sizeof(UniformBufferObject);
-  //gRenderer.CreateBuffer(bufferSize, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, m_UniformBuffer);
+  VkDeviceSize bufferSize = sizeof(UniformBufferObject);
+  m_UniformBuffer = gRenderer.CreateBuffer(bufferSize, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
 }
 
 void ScreenRenderable::UpdateUniformBuffer()
 {
-  //static auto startTime = std::chrono::high_resolution_clock::now();
-  //
-  //auto currentTime = std::chrono::high_resolution_clock::now();
-  //float time = std::chrono::duration<float, std::chrono::seconds::period>(currentTime - startTime).count();
-  //UniformBufferObject ubo = {};
-  //const GameState& gameState = gApp.GetGameState();
-  //auto model = glm::rotate(glm::mat4(1.0f), glm::radians(gameState.GetRotation(0)), glm::vec3(1.0f, 0.0f, 0.0f));
-  //model = glm::rotate(model, glm::radians(gameState.GetRotation(1)), glm::vec3(0.0f, 1.0f, 0.0f));
-  //model = glm::rotate(model, glm::radians(gameState.GetRotation(2)), glm::vec3(0.0f, 0.0f, 1.0f));
-  //
-  //ubo.model = model;
-  //ubo.view = glm::lookAt(glm::vec3(2.0f, 2.0f, 2.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, 1.0f));
-  //ubo.proj = glm::perspective(glm::radians(45.0f), gRenderer.GetSwapChainExtent().width / (float)gRenderer.GetSwapChainExtent().height, 0.1f, 10.0f);
-  //ubo.proj[1][1] *= -1;
-  //ubo.sunDirection = glm::fvec3(gameState.GetSunLightDirection(0), gameState.GetSunLightDirection(1), gameState.GetSunLightDirection(2));
-  //
-  //m_UniformBuffer.CopyDataToBufferMemory(gRenderer.GetDevice(), sizeof(ubo), &ubo);
+  UniformBufferObject ubo = {};
+  ubo.frameIdx.x = gRenderer.GetFrameNumber();
+  m_UniformBuffer->CopyDataToBufferMemory(gRenderer.GetDevice(), sizeof(ubo), &ubo);
 }
 
 void ScreenRenderable::CreateDescriptorPool()
 {
-  //int swapChainImageCount = static_cast<int>(gRenderer.GetSwapChainImagesCount());
-  //std::array<VkDescriptorPoolSize, 2> poolSizes = {};
-  //poolSizes[0].type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-  //poolSizes[0].descriptorCount = static_cast<uint32_t>(swapChainImageCount);
-  //poolSizes[1].type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-  //poolSizes[1].descriptorCount = static_cast<uint32_t>(swapChainImageCount);
-  //
-  //VkDescriptorPoolCreateInfo poolInfo = {};
-  //poolInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
-  //poolInfo.poolSizeCount = static_cast<uint32_t>(poolSizes.size());
-  //poolInfo.pPoolSizes = poolSizes.data();
-  //poolInfo.maxSets = static_cast<uint32_t>(swapChainImageCount);
-  //
-  //if (vkCreateDescriptorPool(gRenderer.GetDevice(), &poolInfo, nullptr, &m_DescriptorPool) != VK_SUCCESS)
-  //{
-  //  throw std::runtime_error("failed to create descriptor pool!");
-  //}
+  int swapChainImageCount = static_cast<int>(gRenderer.GetSwapChainImagesCount());
+  std::array<VkDescriptorPoolSize, 1> poolSizes = {};
+  poolSizes[0].type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+  poolSizes[0].descriptorCount = static_cast<uint32_t>(swapChainImageCount);
+  
+  VkDescriptorPoolCreateInfo poolInfo = {};
+  poolInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
+  poolInfo.poolSizeCount = static_cast<uint32_t>(poolSizes.size());
+  poolInfo.pPoolSizes = poolSizes.data();
+  poolInfo.maxSets = static_cast<uint32_t>(swapChainImageCount);
+  
+  if (vkCreateDescriptorPool(gRenderer.GetDevice(), &poolInfo, nullptr, &m_DescriptorPool) != VK_SUCCESS)
+  {
+    throw std::runtime_error("failed to create descriptor pool!");
+  }
 }
 
 void ScreenRenderable::CreateDescriptorSets()
 {
-  //int swapChainImageCount = static_cast<int>(gRenderer.GetSwapChainImagesCount());
-  //std::vector<VkDescriptorSetLayout> layouts(swapChainImageCount, m_DescriptorSetLayout);
-  //VkDescriptorSetAllocateInfo allocInfo = {};
-  //allocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
-  //allocInfo.descriptorPool = m_DescriptorPool;
-  //allocInfo.descriptorSetCount = static_cast<uint32_t>(layouts.size());
-  //allocInfo.pSetLayouts = layouts.data();
-  //
-  //m_DescriptorSets.resize(swapChainImageCount);
-  //VK_CHECK(vkAllocateDescriptorSets(gRenderer.GetDevice(), &allocInfo, m_DescriptorSets.data()));
-  //
-  //for (size_t i = 0; i < swapChainImageCount; i++)
-  //{
-  //  VkDescriptorBufferInfo bufferInfo = {};
-  //  bufferInfo.buffer = m_UniformBuffer.GetBuffer();
-  //  bufferInfo.offset = 0;
-  //  bufferInfo.range = sizeof(UniformBufferObject);
-  //
-  //  std::array<VkDescriptorImageInfo, 2> imageInfos = {};
-  //  imageInfos[0].imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-  //  imageInfos[0].imageView = m_TextureImageView;
-  //  imageInfos[0].sampler = m_TextureSampler;
-  //
-  //  std::array<VkWriteDescriptorSet, 2> descriptorWrites = {};
-  //  descriptorWrites[0].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-  //  descriptorWrites[0].dstSet = m_DescriptorSets[i];
-  //  descriptorWrites[0].dstBinding = 0;
-  //  descriptorWrites[0].dstArrayElement = 0;
-  //  descriptorWrites[0].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-  //  descriptorWrites[0].descriptorCount = 1;
-  //  descriptorWrites[0].pBufferInfo = &bufferInfo;
-  //  descriptorWrites[0].pImageInfo = nullptr; // Optional
-  //  descriptorWrites[0].pTexelBufferView = nullptr; // Optional
-  //
-  //  descriptorWrites[1].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-  //  descriptorWrites[1].dstSet = m_DescriptorSets[i];
-  //  descriptorWrites[1].dstBinding = 1;
-  //  descriptorWrites[1].dstArrayElement = 0;
-  //  descriptorWrites[1].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-  //  descriptorWrites[1].descriptorCount = 1;
-  //  descriptorWrites[1].pImageInfo = &imageInfos[0];
-  //
-  //  vkUpdateDescriptorSets(gRenderer.GetDevice(), static_cast<uint32_t>(descriptorWrites.size()), descriptorWrites.data(), 0, nullptr);
-  //}
+  int swapChainImageCount = static_cast<int>(gRenderer.GetSwapChainImagesCount());
+  std::vector<VkDescriptorSetLayout> layouts(swapChainImageCount, m_DescriptorSetLayout);
+  VkDescriptorSetAllocateInfo allocInfo = {};
+  allocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
+  allocInfo.descriptorPool = m_DescriptorPool;
+  allocInfo.descriptorSetCount = static_cast<uint32_t>(layouts.size());
+  allocInfo.pSetLayouts = layouts.data();
+  
+  m_DescriptorSets.resize(swapChainImageCount);
+  VK_CHECK(vkAllocateDescriptorSets(gRenderer.GetDevice(), &allocInfo, m_DescriptorSets.data()));
+  
+  for (size_t i = 0; i < swapChainImageCount; i++)
+  {
+    VkDescriptorBufferInfo bufferInfo = {};
+    bufferInfo.buffer = m_UniformBuffer->GetBuffer();
+    bufferInfo.offset = 0;
+    bufferInfo.range = sizeof(UniformBufferObject);
+    
+    std::array<VkWriteDescriptorSet, 1> descriptorWrites = {};
+    descriptorWrites[0].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+    descriptorWrites[0].dstSet = m_DescriptorSets[i];
+    descriptorWrites[0].dstBinding = 0;
+    descriptorWrites[0].dstArrayElement = 0;
+    descriptorWrites[0].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+    descriptorWrites[0].descriptorCount = 1;
+    descriptorWrites[0].pBufferInfo = &bufferInfo;
+    descriptorWrites[0].pImageInfo = nullptr; // Optional
+    descriptorWrites[0].pTexelBufferView = nullptr; // Optional
+  
+    vkUpdateDescriptorSets(gRenderer.GetDevice(), static_cast<uint32_t>(descriptorWrites.size()), descriptorWrites.data(), 0, nullptr);
+  }
 }
 
 void ScreenRenderable::CreateImage(const char* name, VkImage& image, VkDeviceMemory& memory)
@@ -320,20 +290,18 @@ void ScreenRenderable::CreateImage(const char* name, VkImage& image, VkDeviceMem
     throw std::runtime_error("failed to load texture image!");
   }
 
-  Buffer stagingBuffer;
+  Buffer* stagingBuffer = gRenderer.CreateBuffer(imageSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
 
-  gRenderer.CreateBuffer(imageSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, stagingBuffer);
-
-  stagingBuffer.CopyDataToBufferMemory(gRenderer.GetDevice(), imageSize, pixels);
+  stagingBuffer->CopyDataToBufferMemory(gRenderer.GetDevice(), imageSize, pixels);
 
   stbi_image_free(pixels);
 
   gRenderer.CreateImage(texWidth, texHeight, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, image, memory);
   gRenderer.TransitionImageLayout(image, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
-  gRenderer.CopyBufferToImage(stagingBuffer, image, static_cast<uint32_t>(texWidth), static_cast<uint32_t>(texHeight));
+  gRenderer.CopyBufferToImage(*stagingBuffer, image, static_cast<uint32_t>(texWidth), static_cast<uint32_t>(texHeight));
   gRenderer.TransitionImageLayout(image, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
 
-  stagingBuffer.Cleanup();
+  stagingBuffer->Release();
 }
 
 void ScreenRenderable::CreateTextureImage()
@@ -491,13 +459,13 @@ void ScreenRenderable::Render(RenderContext& ctx)
   VkCommandBuffer commandBuffer = ctx.m_CommandBuffer;
   vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, m_GraphicsPipeline);
 
-  VkBuffer vertexBuffers[] = { m_VertexBuffer.GetBuffer() };
+  VkBuffer vertexBuffers[] = { m_VertexBuffer->GetBuffer() };
   VkDeviceSize offsets[] = { 0 };
   vkCmdBindVertexBuffers(commandBuffer, 0, 1, vertexBuffers, offsets);
 
-  vkCmdBindIndexBuffer(commandBuffer, m_IndexBuffer.GetBuffer(), 0, VK_INDEX_TYPE_UINT32);
+  vkCmdBindIndexBuffer(commandBuffer, m_IndexBuffer->GetBuffer(), 0, VK_INDEX_TYPE_UINT32);
 
-  //vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, m_PipelineLayout, 0, 1, &m_DescriptorSets[ctx.m_CommandBufferIdx], 0, nullptr);
+  vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, m_PipelineLayout, 0, 1, &m_DescriptorSets[ctx.m_CommandBufferIdx], 0, nullptr);
 
   vkCmdDrawIndexed(commandBuffer, static_cast<uint32_t>(m_Indices.size()), 1, 0, 0, 0);
 
@@ -511,7 +479,7 @@ void ScreenRenderable::OnCleanupSwapChain()
 
 void ScreenRenderable::Cleanup()
 {
-  //m_UniformBuffer.Cleanup();
+  m_UniformBuffer->Release();
 
   // TODO: duplication OnCleanupSwapChain()
   vkDestroyPipeline(gRenderer.GetDevice(), m_GraphicsPipeline, nullptr);
@@ -521,10 +489,10 @@ void ScreenRenderable::Cleanup()
   //vkDestroyImageView(gRenderer.GetDevice(), m_TextureImageView, nullptr);
   //vkDestroyImage(gRenderer.GetDevice(), m_TextureImage, nullptr);
   //vkFreeMemory(gRenderer.GetDevice(), m_TextureImageMemory, nullptr);
-  //
-  //vkDestroyDescriptorPool(gRenderer.GetDevice(), m_DescriptorPool, nullptr);
-  //
-  //vkDestroyDescriptorSetLayout(gRenderer.GetDevice(), m_DescriptorSetLayout, nullptr);
-  m_IndexBuffer.Cleanup();
-  m_VertexBuffer.Cleanup();
+  
+  vkDestroyDescriptorPool(gRenderer.GetDevice(), m_DescriptorPool, nullptr);
+  
+  vkDestroyDescriptorSetLayout(gRenderer.GetDevice(), m_DescriptorSetLayout, nullptr);
+  m_IndexBuffer->Release();
+  m_VertexBuffer->Release();
 }

@@ -164,24 +164,22 @@ void MeshRenderable::CreateVertexBuffer()
 {
   VkDeviceSize bufferSize = sizeof(Vertex) * m_Vertices.size();
 
-  Buffer stagingBuffer;
-  gRenderer.CreateBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, stagingBuffer);
-  stagingBuffer.CopyDataToBufferMemory(gRenderer.GetDevice(), bufferSize, m_Vertices.data());
-  gRenderer.CreateBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, m_VertexBuffer);
-  gRenderer.CopyBuffer(stagingBuffer, m_VertexBuffer, bufferSize);
-  stagingBuffer.Cleanup();
+  Buffer* stagingBuffer = gRenderer.CreateBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
+  stagingBuffer->CopyDataToBufferMemory(gRenderer.GetDevice(), bufferSize, m_Vertices.data());
+  m_VertexBuffer = gRenderer.CreateBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
+  gRenderer.CopyBuffer(*stagingBuffer, *m_VertexBuffer, bufferSize);
+  stagingBuffer->Release();
 }
 
 void MeshRenderable::CreateIndexBuffer()
 {
   VkDeviceSize bufferSize = sizeof(m_Indices[0]) * m_Indices.size();
 
-  Buffer stagingBuffer;
-  gRenderer.CreateBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, stagingBuffer);
-  stagingBuffer.CopyDataToBufferMemory(gRenderer.GetDevice(), bufferSize, m_Indices.data());
-  gRenderer.CreateBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, m_IndexBuffer);
-  gRenderer.CopyBuffer(stagingBuffer, m_IndexBuffer, bufferSize);
-  stagingBuffer.Cleanup();
+  Buffer* stagingBuffer = gRenderer.CreateBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
+  stagingBuffer->CopyDataToBufferMemory(gRenderer.GetDevice(), bufferSize, m_Indices.data());
+  m_IndexBuffer = gRenderer.CreateBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
+  gRenderer.CopyBuffer(*stagingBuffer, *m_IndexBuffer, bufferSize);
+  stagingBuffer->Release();
 }
 
 void MeshRenderable::CreateDescriptorSetLayout()
@@ -216,7 +214,7 @@ void MeshRenderable::CreateDescriptorSetLayout()
 void MeshRenderable::CreateUniformBuffer()
 {
   VkDeviceSize bufferSize = sizeof(UniformBufferObject);
-  gRenderer.CreateBuffer(bufferSize, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, m_UniformBuffer);
+  m_UniformBuffer = gRenderer.CreateBuffer(bufferSize, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
 }
 
 void MeshRenderable::UpdateUniformBuffer()
@@ -237,7 +235,7 @@ void MeshRenderable::UpdateUniformBuffer()
   ubo.proj[1][1] *= -1;
   ubo.sunDirection = glm::fvec3(gameState.GetSunLightDirection(0), gameState.GetSunLightDirection(1), gameState.GetSunLightDirection(2));
 
-  m_UniformBuffer.CopyDataToBufferMemory(gRenderer.GetDevice(), sizeof(ubo), &ubo);
+  m_UniformBuffer->CopyDataToBufferMemory(gRenderer.GetDevice(), sizeof(ubo), &ubo);
 }
 
 void MeshRenderable::CreateDescriptorPool()
@@ -277,7 +275,7 @@ void MeshRenderable::CreateDescriptorSets()
   for (size_t i = 0; i < swapChainImageCount; i++)
   {
     VkDescriptorBufferInfo bufferInfo = {};
-    bufferInfo.buffer = m_UniformBuffer.GetBuffer();
+    bufferInfo.buffer = m_UniformBuffer->GetBuffer();
     bufferInfo.offset = 0;
     bufferInfo.range = sizeof(UniformBufferObject);
 
@@ -320,20 +318,18 @@ void MeshRenderable::CreateImage(const char* name, VkImage& image, VkDeviceMemor
     throw std::runtime_error("failed to load texture image!");
   }
 
-  Buffer stagingBuffer;
+  Buffer* stagingBuffer = gRenderer.CreateBuffer(imageSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
 
-  gRenderer.CreateBuffer(imageSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, stagingBuffer);
-
-  stagingBuffer.CopyDataToBufferMemory(gRenderer.GetDevice(), imageSize, pixels);
+  stagingBuffer->CopyDataToBufferMemory(gRenderer.GetDevice(), imageSize, pixels);
 
   stbi_image_free(pixels);
 
   gRenderer.CreateImage(texWidth, texHeight, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, image, memory);
   gRenderer.TransitionImageLayout(image, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
-  gRenderer.CopyBufferToImage(stagingBuffer, image, static_cast<uint32_t>(texWidth), static_cast<uint32_t>(texHeight));
+  gRenderer.CopyBufferToImage(*stagingBuffer, image, static_cast<uint32_t>(texWidth), static_cast<uint32_t>(texHeight));
   gRenderer.TransitionImageLayout(image, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
 
-  stagingBuffer.Cleanup();
+  stagingBuffer->Release();
 }
 
 void MeshRenderable::CreateTextureImage()
@@ -479,16 +475,15 @@ void MeshRenderable::Render(RenderContext& ctx)
   VkCommandBuffer commandBuffer = ctx.m_CommandBuffer;
   vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, m_GraphicsPipeline);
 
-  VkBuffer vertexBuffers[] = { m_VertexBuffer.GetBuffer() };
+  VkBuffer vertexBuffers[] = { m_VertexBuffer->GetBuffer() };
   VkDeviceSize offsets[] = { 0 };
   vkCmdBindVertexBuffers(commandBuffer, 0, 1, vertexBuffers, offsets);
 
-  vkCmdBindIndexBuffer(commandBuffer, m_IndexBuffer.GetBuffer(), 0, VK_INDEX_TYPE_UINT32);
+  vkCmdBindIndexBuffer(commandBuffer, m_IndexBuffer->GetBuffer(), 0, VK_INDEX_TYPE_UINT32);
 
   vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, m_PipelineLayout, 0, 1, &m_DescriptorSets[ctx.m_CommandBufferIdx], 0, nullptr);
 
   vkCmdDrawIndexed(commandBuffer, static_cast<uint32_t>(m_Indices.size()), 1, 0, 0, 0);
-
 }
 
 void MeshRenderable::OnCleanupSwapChain()
@@ -499,7 +494,7 @@ void MeshRenderable::OnCleanupSwapChain()
 
 void MeshRenderable::Cleanup()
 {
-  m_UniformBuffer.Cleanup();
+  m_UniformBuffer->Release();
 
   // TODO: duplication OnCleanupSwapChain()
   vkDestroyPipeline(gRenderer.GetDevice(), m_GraphicsPipeline, nullptr);
@@ -513,6 +508,6 @@ void MeshRenderable::Cleanup()
   vkDestroyDescriptorPool(gRenderer.GetDevice(), m_DescriptorPool, nullptr);
 
   vkDestroyDescriptorSetLayout(gRenderer.GetDevice(), m_DescriptorSetLayout, nullptr);
-  m_IndexBuffer.Cleanup();
-  m_VertexBuffer.Cleanup();
+  m_IndexBuffer->Release();
+  m_VertexBuffer->Release();
 }

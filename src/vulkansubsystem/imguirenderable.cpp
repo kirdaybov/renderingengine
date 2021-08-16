@@ -251,15 +251,12 @@ void ImGuiRenderable::CreateImGuiBuffers()
   VkDeviceSize uploadSize = texWidth * texHeight * 4 * sizeof(char);
 
   // Staging buffers for font data upload
-  Buffer stagingBuffer;
+  Buffer* stagingBuffer = gRenderer.CreateBuffer(uploadSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
 
-  gRenderer.CreateBuffer(uploadSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, stagingBuffer);
-
-  stagingBuffer.CopyDataToBufferMemory(gRenderer.GetDevice(), uploadSize, fontData);
-
+  stagingBuffer->CopyDataToBufferMemory(gRenderer.GetDevice(), uploadSize, fontData);
   gRenderer.CreateImage(texWidth, texHeight, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, m_ImGuiFontImage, m_ImGuiFontMemory);
   gRenderer.TransitionImageLayout(m_ImGuiFontImage, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
-  gRenderer.CopyBufferToImage(stagingBuffer, m_ImGuiFontImage, static_cast<uint32_t>(texWidth), static_cast<uint32_t>(texHeight));
+  gRenderer.CopyBufferToImage(*stagingBuffer, m_ImGuiFontImage, static_cast<uint32_t>(texWidth), static_cast<uint32_t>(texHeight));
   gRenderer.TransitionImageLayout(m_ImGuiFontImage, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
 
   // Image view
@@ -273,7 +270,7 @@ void ImGuiRenderable::CreateImGuiBuffers()
   viewInfo.subresourceRange.layerCount = 1;
   VK_CHECK(vkCreateImageView(gRenderer.GetDevice(), &viewInfo, nullptr, &m_ImGuiFontView));
 
-  stagingBuffer.Cleanup();
+  stagingBuffer->Release();
   
   // Font texture Sampler
   VkSamplerCreateInfo samplerInfo = {};
