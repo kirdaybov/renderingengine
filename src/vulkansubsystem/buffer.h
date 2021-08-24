@@ -35,6 +35,7 @@ public:
   Buffer* GetBuffer();
   void ReleaseBuffer(Buffer* buffer);
   void Update();
+  void Cleanup();
 private:
   std::list<Buffer*> m_Buffers;
   std::list<Buffer*> m_ReleasedBuffers[2];

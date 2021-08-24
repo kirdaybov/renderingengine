@@ -203,5 +203,5 @@ public:
   size_t GetSwapChainImagesCount() { return m_SwapChainImages.size(); }
   VkDevice GetDevice() { return m_Device; }
   VkRenderPass GetRenderPass() { return m_RenderPass; }
-  int GetFrameNumber() const { return m_TotalFrame; }
+  int GetFrameNumber() const { return static_cast<int>(m_TotalFrame); }
 };

@@ -3,6 +3,8 @@ struct UniformBufferObject
 	uint frameIdx;
 } ubo;
 
+static uint gRngState;
+
 struct VSOutput
 {
 	float4 pos : SV_POSITION;
@@ -64,9 +66,8 @@ float checkSphere(Ray ray, float4 sphere, Material mat, out Ray outRay)
 	float traveled = tCA - tHC;
 	float3 hit = ray.origin + traveled*ray.dir;
 	outRay.origin = hit;
-	static uint gRngState = uint(uint(ray.dir.x) * uint(1973) + uint(ray.dir.y) * uint(9277) + uint(ubo.frameIdx) * uint(26699)) | uint(1);
-	float3 hitNormal = normalize(normalize(hit - sphere.xyz) + 0.1f*RandomUnitVector(gRngState));
-	outRay.dir = ray.dir + 2 * dot(-ray.dir, hitNormal) * hitNormal;
+	float3 hitNormal = normalize(hit - sphere.xyz);
+	outRay.dir = normalize(ray.dir + 2 * dot(-ray.dir, hitNormal) * hitNormal + RandomUnitVector(gRngState));
 	outRay.color = mat.diffuse;
 	return traveled;
 }
@@ -110,7 +111,9 @@ float3 traceRay(Ray ray, out Ray outRay)
 
 float3 main(VSOutput input) : SV_Target
 {
-    float2 screen = float2(1920.f, 1080.f);
+	gRngState = uint(uint(input.pos.x) * uint(1973) + uint(input.pos.y) * uint(9277) + uint(ubo.frameIdx) * uint(26699)) | uint(1);
+	
+	float2 screen = float2(1920.f, 1080.f);
 	float aspectRatio = screen.x/screen.y;
 	
 	// z+ towards screen
@@ -129,7 +132,6 @@ float3 main(VSOutput input) : SV_Target
 	for (int i = 0; i < BOUNCES; i++)
 	{
 		color = color + k*traceRay(r, nextRay);
-		k = k/2;
 		r = nextRay;
 	}
 	return color;

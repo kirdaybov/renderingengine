@@ -68,7 +68,8 @@ void Renderer::Cleanup()
     vkDestroyFence(m_Device, m_InFlightFences[i], nullptr);
   }
   vkDestroyCommandPool(m_Device, m_CommandPool, nullptr);
-  
+
+  m_BufferPool.Cleanup();
   vkDestroyDevice(m_Device, nullptr);
   if (m_EnableValidationLayers)
     DestroyDebugUtilsMessengerEXT(m_Instance, m_DebugMessenger, nullptr);

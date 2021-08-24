@@ -98,3 +98,11 @@ void BufferPool::Update()
   m_ReleasedBuffers[updateIdx].clear();
   m_Frame = updateIdx;
 }
+
+void BufferPool::Cleanup()
+{
+  for (auto buffer : m_Buffers)
+  {
+    buffer->Cleanup();
+  }
+}
