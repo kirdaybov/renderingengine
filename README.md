@@ -1,5 +1,9 @@
 # Rendering engine
-Experimental Vulkan renderer/engine. At the moment it is capable of rendering a simple model and ImGui interface. Tracks if the shader sources were changed and reloads them on the fly.
+Experimental Vulkan renderer/engine. At the moment it is capable of rendering a simple model, an ImGui interface, and three path traced spheres. Tracks if the shader sources were changed and reloads them on the fly.
+<p align="center">
+  <img src="images/modelrendering.png">
+  <img src="images/pathtracing.png">
+</p>
 
 # Compiling
 At the moment it's not meant to be compiled by someone other than me but it is possible! If you try to run it though it will crash as I haven't hosted the data for it.
